@@ -413,5 +413,5 @@ return function(Config)
 
     updateGlobalFont(C_FONT) 
 
- ด   return { UI = UI, Toggle = toggleUI, Destroy = function() if UI then UI:Destroy() end end }
+    return { UI = UI, Toggle = toggleUI, Destroy = function() if UI then UI:Destroy() end end }
 end
