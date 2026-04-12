@@ -5,7 +5,7 @@
     ██║     ██║   ██║██╔══██║    ██╔══██║██║     ██║     
     ███████╗╚██████╔╝██║  ██║    ██║  ██║███████╗███████╗
     ╚══════╝ ╚═════╝ ╚═╝  ╚═╝    ╚═╝  ╚═╝╚══════╝╚══════╝
-    Library V7: Live Camera Manipulation & Real Character Preview
+    Library V8: Clean UI, Live Camera & Body Part Highlight
 ]=]
 
 local P = game:GetService("Players")
@@ -28,11 +28,10 @@ return function(Config)
     local TOGGLE_KEY = Config.ToggleKey or Enum.KeyCode.RightControl
     local C_FONT = Config.Font or Enum.Font.GothamMedium
     local INFO_TITLE = Config.InfoTitle or "SYSTEM INFO"
-    local VFX_TEXT = Config.HoverText or "VFX: Shadow Weaver\n* Click character to Zoom Out *"
     
     local TAB_BOXES = Config.TabBoxes or {}
     
-    -- 🔒 FIXED TABS (ปรับ Zoom ให้เหมาะกับกล้องจริง)
+    -- 🔒 FIXED TABS (ชิ้นส่วนต่างๆ ของตัวละคร)
     local FIXED_TABS = {
         {id="Head", n="Head", t={"Head"}, angle=0, zoom=3}, 
         {id="Torso", n="Torso", t={"Torso","UpperTorso","LowerTorso"}, angle=0, zoom=6},
@@ -59,7 +58,7 @@ return function(Config)
     local Main = Instance.new("Frame", UI)
     Main.AnchorPoint, Main.Position, Main.Size = Vector2.new(0.5,0.5), UDim2.new(0.5,0,0.5,0), UDim2.new(0,800,0,500)
     Main.BackgroundColor3, Main.ClipsDescendants = Color3.fromRGB(20, 20, 20), true
-    Main.BackgroundTransparency = 0.2 -- ปรับโปร่งใสให้เห็นแมพ
+    Main.BackgroundTransparency = 0.2
     Instance.new("UICorner", Main).CornerRadius = UDim.new(0, 8)
 
     local MainScale = Instance.new("UIScale", Main)
@@ -77,7 +76,7 @@ return function(Config)
     Lbl.AnchorPoint, Lbl.Position, Lbl.Size = Vector2.new(0.5,0.5), UDim2.new(0.5,0,0.5,0), UDim2.new(0,100,1,-10)
     Lbl.BackgroundTransparency, Lbl.Text, Lbl.TextColor3, Lbl.Font, Lbl.TextSize = 1, UI_TITLE, Color3.fromRGB(50,50,50), C_FONT, 16
 
-    -- [[ SETTINGS BUTTON & MAC BUTTONS ]]
+    -- [[ BUTTONS ]]
     local SettingsBtn = Instance.new("TextButton", Top)
     SettingsBtn.AnchorPoint, SettingsBtn.Position, SettingsBtn.Size = Vector2.new(1,0.5), UDim2.new(1,-15,0.5,0), UDim2.new(0,25,0,25)
     SettingsBtn.BackgroundTransparency, SettingsBtn.Text, SettingsBtn.TextColor3, SettingsBtn.TextSize = 1, "⚙", Color3.fromRGB(100,100,100), 20
@@ -98,6 +97,17 @@ return function(Config)
     local mMin = mkMac(Color3.fromRGB(255, 189, 46)) 
     local mMax = mkMac(Color3.fromRGB(39, 201, 63))  
 
+    -- 🌟 ฟังก์ชันล้างไฮไลต์และพรีวิว
+    local function clearHighlights()
+        if p.Character then
+            for _, v in ipairs(p.Character:GetDescendants()) do
+                if v.Name == "VFXHub_Highlight" then
+                    v:Destroy()
+                end
+            end
+        end
+    end
+
     local function clearPreview()
         if p.Character and p.Character:FindFirstChild("PreviewEffects") then
             p.Character.PreviewEffects:ClearAllChildren()
@@ -114,9 +124,9 @@ return function(Config)
             tw:Play()
             tw.Completed:Connect(function() if not uiOpen then Main.Visible = false end end)
             
-            -- คืนค่ากล้องและลบพรีวิวตอนปิด UI
             camera.CameraType = Enum.CameraType.Custom
             clearPreview()
+            clearHighlights()
         end
     end
 
@@ -142,7 +152,7 @@ return function(Config)
 
     local Cont = Instance.new("Frame", Main)
     Cont.Position, Cont.Size, Cont.BackgroundColor3, Cont.ClipsDescendants = UDim2.new(0,0,0,35), UDim2.new(1,0,1,-35), Color3.fromRGB(30,15,45), true
-    Cont.BackgroundTransparency = 0.5 -- ทำให้กรอบเนื้อหาโปร่งแสง
+    Cont.BackgroundTransparency = 0.5
     local Grid = Instance.new("ImageLabel", Cont)
     Grid.Size, Grid.BackgroundTransparency, Grid.Image, Grid.ImageColor3, Grid.ImageTransparency = UDim2.new(1,0,1,0), 1, BG_IMAGE, Color3.fromRGB(200,100,255), 0.8
     Grid.ScaleType, Grid.TileSize = Enum.ScaleType.Tile, UDim2.new(0,50,0,50)
@@ -151,7 +161,7 @@ return function(Config)
     local HBox = Instance.new("TextButton", Cont)
     HBox.AnchorPoint, HBox.Position, HBox.Size, HBox.BackgroundTransparency, HBox.Text, HBox.ZIndex = Vector2.new(0.5,0.5), UDim2.new(0.5,0,0.45,0), UDim2.new(0,350,0,350), 1, "", 5
 
-    -- [[ RIGHT PANEL (BOXES) ]]
+    -- [[ RIGHT PANEL ]]
     local RPane = Instance.new("Frame", Cont)
     RPane.AnchorPoint, RPane.Position, RPane.Size, RPane.ZIndex = Vector2.new(1,0.5), UDim2.new(1.5, 0, 0.45, 0), UDim2.new(0, 420, 0, 320), 5
     RPane.BackgroundColor3, RPane.BackgroundTransparency = Color3.fromRGB(25, 15, 40), 0.2
@@ -173,10 +183,7 @@ return function(Config)
     BoxContainer.BorderSizePixel = 0
     
     local Padding = Instance.new("UIPadding", BoxContainer)
-    Padding.PaddingTop = UDim.new(0, 8)
-    Padding.PaddingBottom = UDim.new(0, 8)
-    Padding.PaddingLeft = UDim.new(0, 5)
-    Padding.PaddingRight = UDim.new(0, 5)
+    Padding.PaddingTop, Padding.PaddingBottom, Padding.PaddingLeft, Padding.PaddingRight = UDim.new(0, 8), UDim.new(0, 8), UDim.new(0, 5), UDim.new(0, 5)
 
     local BoxGridLayout = Instance.new("UIGridLayout", BoxContainer)
     BoxGridLayout.CellSize = UDim2.new(0, 80, 0, 90)
@@ -204,9 +211,7 @@ return function(Config)
                 img.Image = data.Image
                 
                 img.MouseButton1Click:Connect(function()
-                    clearPreview() -- ล้างพรีวิวเก่าออก
-
-                    -- 1. ลอจิกการกดใส่ตัวจริง
+                    clearPreview()
                     if data.Callback then 
                         if type(data.Callback) == "string" and data.Callback:match("^http") then
                             loadstring(game:HttpGet(data.Callback))()
@@ -215,7 +220,6 @@ return function(Config)
                         end
                     end
                     
-                    -- 2. ลอจิกรัน Preview บนตัวละครจริง!
                     local char = p.Character
                     if char then
                         local prevFolder = char:FindFirstChild("PreviewEffects")
@@ -223,13 +227,10 @@ return function(Config)
                             prevFolder = Instance.new("Folder", char)
                             prevFolder.Name = "PreviewEffects"
                         end
-                        
                         if data.Preview then
                             if type(data.Preview) == "string" and data.Preview:match("^http") then
                                 local success, result = pcall(function() return loadstring(game:HttpGet(data.Preview))() end)
-                                if success and type(result) == "function" then
-                                    result(char, prevFolder)
-                                end
+                                if success and type(result) == "function" then result(char, prevFolder) end
                             elseif type(data.Preview) == "function" then
                                 data.Preview(char, prevFolder)
                             end
@@ -261,7 +262,6 @@ return function(Config)
     SetClose.Text, SetClose.TextColor3, SetClose.Font, SetClose.ZIndex = "Close", Color3.fromRGB(255,255,255), C_FONT, 102
     Instance.new("UICorner", SetClose).CornerRadius = UDim.new(0,6)
     
-    -- Font Setting
     local FontLbl = Instance.new("TextLabel", SetBox)
     FontLbl.Size, FontLbl.Position, FontLbl.BackgroundTransparency, FontLbl.Text = UDim2.new(0,100,0,30), UDim2.new(0,30,0,70), 1, "UI Font:"
     FontLbl.TextColor3, FontLbl.Font, FontLbl.TextSize, FontLbl.TextXAlignment, FontLbl.ZIndex = Color3.fromRGB(220,220,220), C_FONT, 16, Enum.TextXAlignment.Left, 102
@@ -289,7 +289,6 @@ return function(Config)
         FontBtn.Text = FontList[fIdx].Name
     end)
 
-    -- Keybind Setting
     local KeyLbl = Instance.new("TextLabel", SetBox)
     KeyLbl.Size, KeyLbl.Position, KeyLbl.BackgroundTransparency, KeyLbl.Text = UDim2.new(0,100,0,30), UDim2.new(0,30,0,120), 1, "Toggle Key:"
     KeyLbl.TextColor3, KeyLbl.Font, KeyLbl.TextSize, KeyLbl.TextXAlignment, KeyLbl.ZIndex = Color3.fromRGB(220,220,220), C_FONT, 16, Enum.TextXAlignment.Left, 102
@@ -343,64 +342,48 @@ return function(Config)
             RTit.Text = "Zone: " .. tabData.n
             RenderBoxes(TAB_BOXES[tabData.id] or {})
 
-            -- เลื่อนเมนูและพื้นที่กดมาทางซ้าย
             TS:Create(HBox, ti, {Position = UDim2.new(0.25, 0, 0.45, 0)}):Play()
             TS:Create(RPane, ti, {Position = UDim2.new(0.97, 0, 0.45, 0)}):Play()
-            Info.Visible = false
 
-            -- 🎥 ระบบล็อกกล้องเข้าหาตัวจริง!
+            -- 🎥 ระบบล็อกกล้องและไฮไลต์ชิ้นส่วน
             local char = p.Character
             if not char or not char:FindFirstChild("HumanoidRootPart") then return end
             
             camera.CameraType = Enum.CameraType.Scriptable
+            clearHighlights() -- ล้างแสงไฮไลต์อันเก่าออกก่อน
 
             local fp = char.HumanoidRootPart
             for _, pName in ipairs(tabData.t) do
-                local found = char:FindFirstChild(pName)
-                if found then fp = found break end
+                local part = char:FindFirstChild(pName)
+                if part and part:IsA("BasePart") then
+                    fp = part
+                    
+                    -- 🌟 สร้างกรอบเรืองแสงให้ชิ้นส่วนที่ถูกเลือก
+                    local hlBox = Instance.new("SelectionBox")
+                    hlBox.Name = "VFXHub_Highlight"
+                    hlBox.Adornee = part
+                    hlBox.LineThickness = 0.03
+                    hlBox.Color3 = C_HL
+                    hlBox.SurfaceColor3 = C_HL
+                    hlBox.SurfaceTransparency = 0.7
+                    hlBox.Parent = part
+                end
             end
 
-            -- คำนวณจุดตั้งกล้อง: ถอยมาด้านหน้า (-Z), เบี่ยงซ้าย (-X) และยกขึ้นนิดหน่อย (+Y)
             local zD = tabData.zoom or 4
-            local camPos
-            if tabData.id == "Back" then
-                camPos = fp.CFrame * CFrame.new(-3, 1, zD + 2) -- ดูกลางหลัง
-            else
-                camPos = fp.CFrame * CFrame.new(-3, 1, -zD - 2) -- ดูด้านหน้าเบี่ยงซ้าย
-            end
-            
+            local camPos = (tabData.id == "Back") and (fp.CFrame * CFrame.new(-3, 1, zD + 2)) or (fp.CFrame * CFrame.new(-3, 1, -zD - 2))
             TS:Create(camera, ti, {CFrame = CFrame.lookAt(camPos.Position, fp.Position)}):Play()
         end)
     end
 
-    HBox.MouseEnter:Connect(function()
-        if not isPanelOpen then
-            Info.Visible = true 
-            TS:Create(Info, ti, {BackgroundTransparency=0.3}):Play()
-            TS:Create(IStrk, ti, {Transparency=0.5}):Play()
-            TS:Create(ITit, ti, {TextTransparency=0}):Play()
-            TS:Create(IVFX, ti, {TextTransparency=0}):Play()
-        end
-    end)
-
-    HBox.MouseLeave:Connect(function()
-        if not isPanelOpen then
-            TS:Create(Info, ti, {BackgroundTransparency=1}):Play()
-            TS:Create(IStrk, ti, {Transparency=1}):Play()
-            TS:Create(ITit, ti, {TextTransparency=1}):Play()
-            TS:Create(IVFX, ti, {TextTransparency=1}):Play()
-            task.delay(0.5, function() if Info.BackgroundTransparency==1 then Info.Visible=false end end)
-        end
-    end)
-
-    -- ปุ่ม Zoom Out (คืนค่ากล้องกลับมา)
+    -- ปุ่ม Zoom Out
     HBox.MouseButton1Click:Connect(function()
         isPanelOpen = false
         TS:Create(HBox, ti, {Position = UDim2.new(0.5, 0, 0.45, 0)}):Play()
         TS:Create(RPane, ti, {Position = UDim2.new(1.5, 0, 0.45, 0)}):Play()
         
-        -- ปลดล็อกกล้องให้กลับเป็นปกติ
         camera.CameraType = Enum.CameraType.Custom
+        clearHighlights() -- ล้างไฮไลต์ตอนซูมออก
     end)
 
     updateGlobalFont(C_FONT) 
