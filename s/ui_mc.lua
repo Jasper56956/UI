@@ -5,7 +5,7 @@
     ██║     ██║   ██║██╔══██║    ██╔══██║██║     ██║     
     ███████╗╚██████╔╝██║  ██║    ██║  ██║███████╗███████╗
     ╚══════╝ ╚═════╝ ╚═╝  ╚═╝    ╚═╝  ╚═╝╚══════╝╚══════╝
-    Library V14: Top-Left Back Button & Hidden Panels
+    Library V15: Removed Back Button
 ]=]
 
 local P = game:GetService("Players")
@@ -247,35 +247,6 @@ return function(Config)
     end
 
     -- ======================================================
-    -- 🔙 BACK BUTTON (TOP LEFT)
-    -- ======================================================
-    local BackBtn = Instance.new("TextButton", Cont)
-    BackBtn.Size = UDim2.new(0, 80, 0, 32)
-    BackBtn.Position = UDim2.new(0, 15, 0, 15)
-    BackBtn.BackgroundColor3 = Color3.fromRGB(150, 20, 30)
-    BackBtn.Text = "< BACK"
-    BackBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-    BackBtn.Font = C_FONT
-    BackBtn.TextSize = 14
-    BackBtn.AutoButtonColor = false
-    BackBtn.Visible = false -- ซ่อนไว้ตอนแรก
-    Instance.new("UICorner", BackBtn).CornerRadius = UDim.new(0, 6)
-    
-    local BackStrk = Instance.new("UIStroke", BackBtn)
-    BackStrk.Color = Color3.fromRGB(255, 80, 80)
-    BackStrk.Thickness = 1.5
-
-    BackBtn.MouseEnter:Connect(function() 
-        TS:Create(BackStrk, TweenInfo.new(0.2), {Color = Color3.fromRGB(255, 120, 50), Thickness = 2}):Play()
-        TS:Create(BackBtn, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(200, 40, 40)}):Play()
-    end)
-    BackBtn.MouseLeave:Connect(function() 
-        TS:Create(BackStrk, TweenInfo.new(0.2), {Color = Color3.fromRGB(255, 80, 80), Thickness = 1.5}):Play()
-        TS:Create(BackBtn, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(150, 20, 30)}):Play()
-    end)
-
-
-    -- ======================================================
     -- ⚙️ SETTINGS PANEL 
     -- ======================================================
     local SetPnl = Instance.new("Frame", Main)
@@ -378,10 +349,9 @@ return function(Config)
         lbl.TextColor3, lbl.Font, lbl.TextSize, lbl.ZIndex = Color3.fromRGB(255,255,255), C_FONT, 11, 8
 
         btn.MouseButton1Click:Connect(function()
-            -- แสดง Panel และปุ่ม Back เมื่อกดโฟกัส
+            -- แสดง Panel เมื่อกดโฟกัส
             HBox.Visible = true
             RPane.Visible = true
-            BackBtn.Visible = true 
 
             RTit.Text = "Zone: " .. tabData.n
             RenderBoxes(TAB_BOXES[tabData.id] or {})
@@ -414,7 +384,7 @@ return function(Config)
     end
 
     -- ======================================================
-    -- 🔙 ZOOM OUT LOGIC (กดพื้นที่ว่าง หรือ ปุ่ม Back)
+    -- 🔙 ZOOM OUT LOGIC (กดพื้นที่ว่าง)
     -- ======================================================
     local function performZoomOut()
         local tw = TS:Create(RPane, ti, {Position = UDim2.new(1.5, 0, 0.45, 0)})
@@ -424,7 +394,6 @@ return function(Config)
         tw.Completed:Connect(function()
             HBox.Visible = false
             RPane.Visible = false
-            BackBtn.Visible = false -- ซ่อนปุ่ม Back เมื่อซูมออก
         end)
 
         camera.CameraType = Enum.CameraType.Custom
@@ -432,7 +401,6 @@ return function(Config)
     end
 
     HBox.MouseButton1Click:Connect(performZoomOut)
-    BackBtn.MouseButton1Click:Connect(performZoomOut)
 
     return { UI = UI, Toggle = toggleUI, Destroy = function() if UI then UI:Destroy() end end }
 end
