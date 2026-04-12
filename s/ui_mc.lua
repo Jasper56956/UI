@@ -5,7 +5,7 @@
     ██║     ██║   ██║██╔══██║    ██╔══██║██║     ██║     
     ███████╗╚██████╔╝██║  ██║    ██║  ██║███████╗███████╗
     ╚══════╝ ╚═════╝ ╚═╝  ╚═╝    ╚═╝  ╚═╝╚══════╝╚══════╝
-    Library V4.1: Settings Panel Fixed (Top ZIndex & No Click-Through)
+    Library V5: Grid Layout (Max 4 per row) & Scrollable Boxes
 ]=]
 
 local P = game:GetService("Players")
@@ -155,22 +155,37 @@ return function(Config)
     RTit.Text, RTit.TextColor3, RTit.Font, RTit.TextSize = INFO_TITLE, Color3.fromRGB(255,255,255), C_FONT, 22
     RTit.TextXAlignment = Enum.TextXAlignment.Left
 
-    local BoxContainer = Instance.new("Frame", RPane)
-    BoxContainer.Size, BoxContainer.Position, BoxContainer.BackgroundTransparency = UDim2.new(1, -40, 0, 100), UDim2.new(0, 20, 0, 80), 1
-    local BoxListLayout = Instance.new("UIListLayout", BoxContainer)
-    BoxListLayout.FillDirection, BoxListLayout.Padding, BoxListLayout.HorizontalAlignment, BoxListLayout.VerticalAlignment = Enum.FillDirection.Horizontal, UDim.new(0, 20), Enum.HorizontalAlignment.Center, Enum.VerticalAlignment.Center
+    -- 🔄 อัปเดต: เปลี่ยนเป็น ScrollingFrame และใช้ UIGridLayout
+    local BoxContainer = Instance.new("ScrollingFrame", RPane)
+    BoxContainer.Size, BoxContainer.Position, BoxContainer.BackgroundTransparency = UDim2.new(1, -20, 1, -70), UDim2.new(0, 10, 0, 60), 1
+    BoxContainer.ScrollBarThickness = 4
+    BoxContainer.ScrollBarImageColor3 = C_HL
+    BoxContainer.AutomaticCanvasSize = Enum.AutomaticSize.Y -- ขยายหน้าจอให้เลื่อนได้อัตโนมัติ
+    BoxContainer.CanvasSize = UDim2.new(0, 0, 0, 0)
+    BoxContainer.BorderSizePixel = 0
+
+    local BoxGridLayout = Instance.new("UIGridLayout", BoxContainer)
+    BoxGridLayout.CellSize = UDim2.new(0, 80, 0, 90) -- ขนาดของแต่ละกล่อง
+    BoxGridLayout.CellPadding = UDim2.new(0, 15, 0, 15) -- ระยะห่างระหว่างกล่อง
+    BoxGridLayout.FillDirectionMaxCells = 4 -- บังคับให้ครบ 4 กล่องแล้วขึ้นบรรทัดใหม่
+    BoxGridLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
+    BoxGridLayout.SortOrder = Enum.SortOrder.LayoutOrder
 
     local function RenderBoxes(boxDataList)
+        -- ล้างกล่องเก่าทิ้ง
         for _, v in ipairs(BoxContainer:GetChildren()) do
             if v:IsA("Frame") then v:Destroy() end
         end
         boxDataList = boxDataList or {}
+        
         for _, data in ipairs(boxDataList) do
             local slot = Instance.new("Frame", BoxContainer)
-            slot.Size, slot.BackgroundColor3, slot.BackgroundTransparency = UDim2.new(0, 80, 0, 90), Color3.fromRGB(35, 20, 50), 0.5
+            -- ไม่ต้องกำหนด Size เองแล้ว เพราะ UIGridLayout จะจัดการให้
+            slot.BackgroundColor3, slot.BackgroundTransparency = Color3.fromRGB(35, 20, 50), 0.5
             Instance.new("UICorner", slot).CornerRadius = UDim.new(0, 6)
             local slotStrk = Instance.new("UIStroke", slot)
             slotStrk.Color, slotStrk.Transparency, slotStrk.Thickness = C_HL, 0.3, 2 
+            
             if data.Image then
                 local img = Instance.new("ImageButton", slot)
                 img.Size, img.BackgroundTransparency, img.Position, img.AnchorPoint = UDim2.new(1, -10, 1, -10), 1, UDim2.new(0.5, 0, 0.5, 0), Vector2.new(0.5, 0.5)
@@ -180,8 +195,7 @@ return function(Config)
         end
     end
 
-    -- [[ 🛠️ SETTINGS PANEL OVERLAY (FIXED Z-INDEX & ACTIVE) ]]
-    -- ย้าย SetPnl มาไว้ที่ Main เพื่อให้อยู่ทับ Cont ทั้งหมด และตั้ง Active = true กันการคลิกทะลุ
+    -- [[ 🛠️ SETTINGS PANEL OVERLAY ]]
     local SetPnl = Instance.new("Frame", Main)
     SetPnl.Size, SetPnl.Position, SetPnl.BackgroundColor3 = UDim2.new(1,0,1,-35), UDim2.new(0,0,0,35), Color3.fromRGB(15,10,25)
     SetPnl.BackgroundTransparency, SetPnl.ZIndex, SetPnl.Visible, SetPnl.Active = 0.2, 100, false, true 
