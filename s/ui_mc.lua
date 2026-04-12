@@ -5,7 +5,7 @@
     ██║     ██║   ██║██╔══██║    ██╔══██║██║     ██║     
     ███████╗╚██████╔╝██║  ██║    ██║  ██║███████╗███████╗
     ╚══════╝ ╚═════╝ ╚═╝  ╚═╝    ╚═╝  ╚═╝╚══════╝╚══════╝
-    Created by: L Ua all (Classic Noob 3D Version)
+    Created by: L Ua all (Real Character 3D Version)
 ]]
 
 return function(Config)
@@ -51,7 +51,7 @@ return function(Config)
     Lbl.BackgroundTransparency, Lbl.TextColor3, Lbl.Text = 1, Color3.fromRGB(50,50,50), TitleText
     Lbl.Font, Lbl.TextSize = Enum.Font.GothamMedium, 16
 
-    -- [[ VIEWPORT (Classic Noob 3D) ]]
+    -- [[ VIEWPORT (Real 3D Character) ]]
     local Cont = Instance.new("Frame", Main)
     Cont.Position, Cont.Size, Cont.BackgroundColor3 = UDim2.new(0,0,0,35), UDim2.new(1,0,1,-35), Color3.fromRGB(40,30,55)
 
@@ -64,52 +64,21 @@ return function(Config)
     Cam.FieldOfView = 50
 
     local rotAngle = 0
-    local function setupNoobChar()
+    local function setupRealChar(character)
         WM:ClearAllChildren()
         
-        -- สร้างโมเดลตัวละคร Noob พื้นฐาน
-        local noobModel = Instance.new("Model", WM)
-        noobModel.Name = "ClassicNoob"
+        -- ใช้โหมดดึงรูปลักษณ์จริงของผู้เล่น
+        local charModel = game:GetService("Players"):CreateHumanoidModelFromUserId(p.UserId)
+        charModel.Parent = WM
         
-        local partsData = {
-            Head = {Size = Vector3.new(1, 1, 1), Color = BrickColor.new("Bright yellow"), Position = Vector3.new(0, 1.5, 0)},
-            Torso = {Size = Vector3.new(2, 2, 1), Color = BrickColor.new("Bright blue"), Position = Vector3.new(0, 0, 0)},
-            RightArm = {Size = Vector3.new(1, 2, 1), Color = BrickColor.new("Bright yellow"), Position = Vector3.new(1.5, 0, 0)},
-            LeftArm = {Size = Vector3.new(1, 2, 1), Color = BrickColor.new("Bright yellow"), Position = Vector3.new(-1.5, 0, 0)},
-            RightLeg = {Size = Vector3.new(1, 2, 1), Color = BrickColor.new("Br. yellowish green"), Position = Vector3.new(0.5, -2, 0)},
-            LeftLeg = {Size = Vector3.new(1, 2, 1), Color = BrickColor.new("Br. yellowish green"), Position = Vector3.new(-0.5, -2, 0)},
-            HumanoidRootPart = {Size = Vector3.new(2, 2, 1), Transparency = 1, Position = Vector3.new(0, 0, 0)} -- สำหรับหมุน
-        }
-
-        for name, data in pairs(partsData) do
-            local p = Instance.new("Part", noobModel)
-            p.Name = name
-            p.Size = data.Size
-            p.BrickColor = data.Color or BrickColor.new("Medium stone grey")
-            p.Transparency = data.Transparency or 0
-            p.CFrame = CFrame.new(data.Position)
-            p.Anchored = true
-            p.CanCollide = false
-            
-            -- สร้างหัวแบบคลาสสิก
-            if name == "Head" then
-                local mesh = Instance.new("SpecialMesh", p)
-                mesh.MeshType = Enum.MeshType.Head
-                mesh.Scale = Vector3.new(1.25, 1.25, 1.25)
-                
-                -- ใส่หน้ายิ้ม
-                local face = Instance.new("Decal", p)
-                face.Texture = "rbxasset://textures/face.png"
-                face.Face = Enum.Face.Front
-            end
-        end
-        
-        local hrp = noobModel:WaitForChild("HumanoidRootPart")
+        local hrp = charModel:WaitForChild("HumanoidRootPart")
+        hrp.Anchored = true
+        hrp.CFrame = CFrame.new(0, 0, 0)
         
         -- ตั้งค่ามุมกล้องให้เห็นตัวละครชัดๆ
-        Cam.CFrame = CFrame.new(Vector3.new(0, 1, -7), hrp.Position)
+        Cam.CFrame = CFrame.new(Vector3.new(0, 2, -8), hrp.Position + Vector3.new(0, 0.5, 0))
 
-        -- ระบบหมุนตัวละคร Noob 3D
+        -- ระบบหมุนตัวละคร 3D
         if _G.UpdateConn then _G.UpdateConn:Disconnect() end
         _G.UpdateConn = RS.RenderStepped:Connect(function(dt)
             rotAngle = rotAngle + (dt * 40) -- ปรับความเร็วการหมุนตรงนี้
@@ -117,7 +86,7 @@ return function(Config)
         end)
     end
 
-    setupNoobChar()
+    setupRealChar()
 
     -- [[ SELECTION BUTTONS (ล่างสุด) ]]
     local SlotP = Instance.new("Frame", Cont)
