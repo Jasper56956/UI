@@ -373,7 +373,7 @@ return function(Config)
                     hb.Color3 = C_HL
                     hb.SurfaceColor3 = C_HL
                     hb.LineThickness = 0.05
-                    hb.Transparency = 0
+                    hb.Transparency = 1
                     hb.SurfaceTransparency = 0.7
                 end
             end
