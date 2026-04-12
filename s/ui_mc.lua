@@ -343,7 +343,7 @@ return function(Config)
                 if part and part:IsA("BasePart") then
                     fp = part
                     local hb = Instance.new("SelectionBox", part)
-                    hb.Name, hb.Adornee, hb.Color3, hb.SurfaceTransparency = "VFXHub_Highlight", part, C_HL, 0.7
+                    hb.Name, hb.Adornee, hb.Color3, hb.SurfaceTransparency = "VFXHub_Highlight", part, C_HL, 0.2
                 end
             end
             local zD = tabData.zoom or 4
