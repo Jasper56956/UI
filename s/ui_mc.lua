@@ -5,7 +5,7 @@
     ██║     ██║   ██║██╔══██║    ██╔══██║██║     ██║     
     ███████╗╚██████╔╝██║  ██║    ██║  ██║███████╗███████╗
     ╚══════╝ ╚═════╝ ╚═╝  ╚═╝    ╚═╝  ╚═╝╚══════╝╚══════╝
-    Created by: L Ua all (Image & Text Tabs Version)
+    Created by: L Ua all (Info Panel & Dynamic Content Version)
 ]]
 
 return function(Config)
@@ -34,14 +34,14 @@ return function(Config)
     UI.Name, UI.ResetOnSpawn = "VFXHub", false
 
     local Main = Instance.new("Frame", UI)
-    Main.AnchorPoint, Main.Position, Main.Size = Vector2.new(0.5,0.5), UDim2.new(0.5,0,0.5,0), UDim2.new(0,800,0,500)
+    Main.AnchorPoint, Main.Position, Main.Size = Vector2.new(0.5,0.5), UDim2.new(0.5,0,0.5,0), UDim2.new(0,850,0,500)
     Main.BackgroundColor3, Main.ClipsDescendants = Color3.fromRGB(30, 30, 30), true
-    Instance.new("UICorner", Main).CornerRadius = UDim.new(0, 8)
+    Instance.new("UICorner", Main).CornerRadius = UDim.new(0, 10)
 
     -- [[ TOP BAR ]]
     local Top = Instance.new("Frame", Main)
     Top.Size, Top.BackgroundColor3 = UDim2.new(1,0,0,35), Color3.fromRGB(220, 220, 220)
-    Instance.new("UICorner", Top).CornerRadius = UDim.new(0, 8)
+    Instance.new("UICorner", Top).CornerRadius = UDim.new(0, 10)
 
     local Lbl = Instance.new("TextLabel", Top)
     Lbl.AnchorPoint, Lbl.Position, Lbl.Size = Vector2.new(0.5,0.5), UDim2.new(0.5,0,0.5,0), UDim2.new(0,200,1,0)
@@ -54,63 +54,97 @@ return function(Config)
 
     -- [[ VIEWPORT (3D Character) ]]
     local VP = Instance.new("ViewportFrame", Cont)
-    VP.AnchorPoint, VP.Position, VP.Size, VP.BackgroundTransparency = Vector2.new(0.5,0.5), UDim2.new(0.5,0,0.45,0), UDim2.new(0,400,0,450), 1
+    VP.Position, VP.Size, VP.BackgroundTransparency = UDim2.new(0,20,0,20), UDim2.new(0,350,0,350), 1
     local WM = Instance.new("WorldModel", VP)
     local Cam = Instance.new("Camera", VP)
     VP.CurrentCamera = Cam
 
-    local function setupChar()
+    local function setupMainChar()
         WM:ClearAllChildren()
         local charModel = P:CreateHumanoidModelFromUserId(p.UserId)
         charModel.Parent = WM
         local hrp = charModel:WaitForChild("HumanoidRootPart")
         hrp.Anchored = true
         Cam.CFrame = CFrame.new(Vector3.new(0, 2, -8), hrp.Position + Vector3.new(0, 0.5, 0))
-
         local rot = 0
-        if _G.VFX_Rot then _G.VFX_Rot:Disconnect() end
-        _G.VFX_Rot = RS.RenderStepped:Connect(function(dt)
+        if _G.VFX_MainRot then _G.VFX_MainRot:Disconnect() end
+        _G.VFX_MainRot = RS.RenderStepped:Connect(function(dt)
             rot = rot + (dt * 45)
             hrp.CFrame = CFrame.new(0,0,0) * CFrame.Angles(0, math.rad(rot), 0)
         end)
     end
-    setupChar()
+    setupMainChar()
 
-    -- [[ TAB CONTAINER ]]
+    -- [[ 🖼️ RIGHT INFO PANEL ]]
+    local InfoPanel = Instance.new("Frame", Cont)
+    InfoPanel.Position, InfoPanel.Size = UDim2.new(0,400,0,20), UDim2.new(0,420,0,350)
+    InfoPanel.BackgroundColor3, InfoPanel.BackgroundTransparency = Color3.fromRGB(20, 15, 35), 0.3
+    Instance.new("UICorner", InfoPanel).CornerRadius = UDim.new(0,10)
+    local stroke = Instance.new("UIStroke", InfoPanel)
+    stroke.Color, stroke.Thickness, stroke.Transparency = MainColor, 1.5, 0.5
+
+    local InfoTitle = Instance.new("TextLabel", InfoPanel)
+    InfoTitle.Size, InfoTitle.Position = UDim2.new(1,-40,0,40), UDim2.new(0,20,0,15)
+    InfoTitle.BackgroundTransparency, InfoTitle.TextColor3 = 1, Color3.fromRGB(255,255,255)
+    InfoTitle.Font, InfoTitle.TextSize, InfoTitle.TextXAlignment = Enum.Font.GothamBold, 24, Enum.TextXAlignment.Left
+    InfoTitle.Text = "ข้อมูลส่วนตัว"
+
+    local InfoDesc = Instance.new("TextLabel", InfoPanel)
+    InfoDesc.Size, InfoDesc.Position = UDim2.new(1,-40,0,60), UDim2.new(0,20,0,60)
+    InfoDesc.BackgroundTransparency, InfoDesc.TextColor3 = 1, Color3.fromRGB(200, 200, 200)
+    InfoDesc.Font, InfoDesc.TextSize, InfoDesc.TextXAlignment, InfoDesc.TextWrapped = Enum.Font.Gotham, 14, Enum.TextXAlignment.Left, true
+    InfoDesc.Text = "กรุณาเลือกเมนูเพื่อดูรายละเอียด"
+
+    -- ช่องใส่ไอเทม/รูปภาพ (Content Grid)
+    local Grid = Instance.new("Frame", InfoPanel)
+    Grid.Position, Grid.Size, Grid.BackgroundTransparency = UDim2.new(0,20,0,130), UDim2.new(1,-40,0,150), 1
+    local GLo = Instance.new("UIGridLayout", Grid)
+    GLo.CellPadding, GLo.CellSize = UDim2.new(0,10,0,10), UDim2.new(0,85,0,85)
+
+    -- [[ ฟังก์ชันอัปเดตข้อมูลทางขวา ]]
+    local function UpdateInfo(data)
+        InfoTitle.Text = data.Name or "Unknown"
+        InfoDesc.Text = data.Description or ""
+        -- ลบของเก่าใน Grid
+        for _, v in ipairs(Grid:GetChildren()) do if v:IsA("GuiObject") then v:Destroy() end end
+        
+        -- ถ้ามี Items (รูปภาพที่คลิกได้)
+        if data.Items then
+            for _, item in ipairs(data.Items) do
+                local iBtn = Instance.new("ImageButton", Grid)
+                iBtn.BackgroundColor3, iBtn.BorderSizePixel = Color3.fromRGB(45, 35, 70), 0
+                iBtn.Image = item.Image or ""
+                Instance.new("UICorner", iBtn).CornerRadius = UDim.new(0, 8)
+                Instance.new("UIStroke", iBtn).Color = MainColor
+                
+                iBtn.MouseButton1Click:Connect(function()
+                    if item.Callback then item.Callback() end
+                end)
+            end
+        end
+    end
+
+    -- [[ TAB CONTAINER ด้านล่าง ]]
     local SlotP = Instance.new("Frame", Cont)
-    SlotP.AnchorPoint, SlotP.Position, SlotP.Size = Vector2.new(0.5,1), UDim2.new(0.5,0,1,-20), UDim2.new(0,650,0,75)
+    SlotP.AnchorPoint, SlotP.Position, SlotP.Size = Vector2.new(0.5,1), UDim2.new(0.5,0,1,-20), UDim2.new(0,700,0,80)
     SlotP.BackgroundColor3, SlotP.BackgroundTransparency = Color3.fromRGB(15, 10, 25), 0.6
     Instance.new("UICorner", SlotP).CornerRadius = UDim.new(0,10)
-    
-    local LLo = Instance.new("UIListLayout", SlotP)
-    LLo.FillDirection, LLo.HorizontalAlignment, LLo.VerticalAlignment, LLo.Padding = Enum.FillDirection.Horizontal, Enum.HorizontalAlignment.Center, Enum.VerticalAlignment.Center, UDim.new(0,12)
+    Instance.new("UIListLayout", SlotP).FillDirection, SlotP.UIListLayout.HorizontalAlignment, SlotP.UIListLayout.VerticalAlignment, SlotP.UIListLayout.Padding = Enum.FillDirection.Horizontal, Enum.HorizontalAlignment.Center, Enum.VerticalAlignment.Center, UDim.new(0,12)
 
-    -- [[ สร้างปุ่มแบบ Dynamic (รองรับ Name และ Image) ]]
-    for _, info in ipairs(CustomTabs) do
+    for i, info in ipairs(CustomTabs) do
         local btn = Instance.new("TextButton", SlotP)
-        btn.Size, btn.BackgroundColor3, btn.Text = UDim2.new(0,60,0,60), Color3.fromRGB(60, 40, 100), ""
-        btn.AutoButtonColor = true
+        btn.Size, btn.BackgroundColor3, btn.Text = UDim2.new(0,65,0,65), Color3.fromRGB(60, 40, 100), ""
         Instance.new("UICorner", btn).CornerRadius = UDim.new(0,10)
         
-        -- ใส่ Stroke ให้ปุ่มดูคมขึ้น
-        local strk = Instance.new("UIStroke", btn)
-        strk.Color, strk.Thickness, strk.Transparency = MainColor, 1.5, 0.5
+        local l = Instance.new("TextLabel", btn)
+        l.Size, l.BackgroundTransparency, l.Text = UDim2.new(1,0,1,0), 1, ForceString(info.Name, "Tab")
+        l.TextColor3, l.Font, l.TextSize, l.TextScaled = Color3.fromRGB(255,255,255), Enum.Font.GothamBold, 11, true
 
-        if info.Image then
-            -- ถ้ามี ID รูปภาพ ให้สร้างปุ่มรูป
-            local img = Instance.new("ImageLabel", btn)
-            img.Size = UDim2.new(0.7,0,0.7,0)
-            img.Position = UDim2.new(0.5,0,0.5,0)
-            img.AnchorPoint = Vector2.new(0.5,0.5)
-            img.BackgroundTransparency = 1
-            img.Image = info.Image
-            img.ScaleType = Enum.ScaleType.Fit
-        else
-            -- ถ้าไม่มีรูป ให้แสดงข้อความแทน
-            local l = Instance.new("TextLabel", btn)
-            l.Size = UDim2.new(1,-10,1,-10)
-            l.Position = UDim2.new(0.5,0,0.5,0)
-            l.AnchorPoint = Vector2.new(0.5,0.5)
-            l.BackgroundTransparency = 1
-            l.Text = ForceString(info.Name, "Tab")
-            l.TextColor3, l.Font, l.TextSize = Color3.
+        btn.MouseButton1Click:Connect(function()
+            UpdateInfo(info) -- อัปเดตข้อมูลทางขวา
+            if info.Callback then info.Callback() end
+        end)
+    end
+
+    return { UI = UI }
+end
