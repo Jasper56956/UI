@@ -402,7 +402,7 @@ return function(Config)
                     hb.Adornee = part
                     hb.Color3 = C_HL
                     hb.SurfaceColor3 = C_HL
-                    hb.LineThickness = 0.01
+                    hb.LineThickness = 0.05
                     hb.Transparency = 0
                     hb.SurfaceTransparency = 0.8
                 end
