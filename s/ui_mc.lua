@@ -5,7 +5,7 @@
     ██║     ██║   ██║██╔══██║    ██╔══██║██║     ██║     
     ███████╗╚██████╔╝██║  ██║    ██║  ██║███████╗███████╗
     ╚══════╝ ╚═════╝ ╚═╝  ╚═╝    ╚═╝  ╚═╝╚══════╝╚══════╝
-    Library V9: Neon Red UX Bottom Bar & Live Body Highlight
+    Library V10: Key System (Login) & Neon Red UX
 ]=]
 
 local P = game:GetService("Players")
@@ -28,9 +28,12 @@ return function(Config)
     local C_FONT = Config.Font or Enum.Font.GothamMedium
     local INFO_TITLE = Config.InfoTitle or "SYSTEM INFO"
     
+    -- 🔑 KEY SYSTEM CONFIG
+    local USE_KEY = Config.UseKeySystem == nil and true or Config.UseKeySystem -- เปิดใช้ระบบคีย์ (ค่าเริ่มต้นเปิด)
+    local CORRECT_KEY = Config.Key or "VFX2024" -- คีย์ที่ถูกต้อง
+    
     local TAB_BOXES = Config.TabBoxes or {}
     
-    -- 🔒 FIXED TABS (ชิ้นส่วนต่างๆ ของตัวละคร)
     local FIXED_TABS = {
         {id="Head", n="Head", t={"Head"}, angle=0, zoom=3}, 
         {id="Torso", n="Torso", t={"Torso","UpperTorso","LowerTorso"}, angle=0, zoom=6},
@@ -54,15 +57,114 @@ return function(Config)
     UI.Name, UI.ResetOnSpawn = "VFXHub", false
     UI.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 
+    -- ======================================================
+    -- 🔐 LOGIN SYSTEM (KEY & NAME)
+    -- ======================================================
+    local isLoggedIn = not USE_KEY
+    local uiOpen = false -- เริ่มต้นด้วยการปิด UI หลัก
+
+    local LoginFrame = Instance.new("Frame", UI)
+    LoginFrame.AnchorPoint, LoginFrame.Position, LoginFrame.Size = Vector2.new(0.5, 0.5), UDim2.new(0.5, 0, 0.5, 0), UDim2.new(0, 350, 0, 300)
+    LoginFrame.BackgroundColor3, LoginFrame.BackgroundTransparency = Color3.fromRGB(15, 10, 25), 0.1
+    LoginFrame.Visible = USE_KEY
+    Instance.new("UICorner", LoginFrame).CornerRadius = UDim.new(0, 10)
+    
+    local LoginStroke = Instance.new("UIStroke", LoginFrame)
+    LoginStroke.Color, LoginStroke.Thickness = Color3.fromRGB(200, 40, 40), 2
+
+    local LoginTitle = Instance.new("TextLabel", LoginFrame)
+    LoginTitle.Size, LoginTitle.Position, LoginTitle.BackgroundTransparency = UDim2.new(1, 0, 0, 60), UDim2.new(0, 0, 0, 10), 1
+    LoginTitle.Text, LoginTitle.TextColor3, LoginTitle.Font, LoginTitle.TextSize = "LOGIN SYSTEM", Color3.fromRGB(255, 100, 100), C_FONT, 24
+
+    -- ช่องใส่ชื่อ
+    local UserBox = Instance.new("TextBox", LoginFrame)
+    UserBox.Size, UserBox.Position, UserBox.AnchorPoint = UDim2.new(0, 280, 0, 45), UDim2.new(0.5, 0, 0.5, -40), Vector2.new(0.5, 0.5)
+    UserBox.BackgroundColor3, UserBox.TextColor3, UserBox.PlaceholderText = Color3.fromRGB(25, 15, 35), Color3.fromRGB(255, 255, 255), "Username"
+    UserBox.Text = p.Name -- ใส่ชื่อผู้เล่นให้อัตโนมัติ
+    UserBox.Font, UserBox.TextSize = C_FONT, 16
+    Instance.new("UICorner", UserBox).CornerRadius = UDim.new(0, 6)
+    Instance.new("UIStroke", UserBox).Color = Color3.fromRGB(100, 50, 150)
+
+    -- ช่องใส่คีย์
+    local KeyBox = Instance.new("TextBox", LoginFrame)
+    KeyBox.Size, KeyBox.Position, KeyBox.AnchorPoint = UDim2.new(0, 280, 0, 45), UDim2.new(0.5, 0, 0.5, 20), Vector2.new(0.5, 0.5)
+    KeyBox.BackgroundColor3, KeyBox.TextColor3, KeyBox.PlaceholderText = Color3.fromRGB(25, 15, 35), Color3.fromRGB(255, 255, 255), "Enter Key..."
+    KeyBox.Text, KeyBox.Font, KeyBox.TextSize = "", C_FONT, 16
+    Instance.new("UICorner", KeyBox).CornerRadius = UDim.new(0, 6)
+    Instance.new("UIStroke", KeyBox).Color = Color3.fromRGB(100, 50, 150)
+
+    -- ปุ่ม Verify
+    local VerifyBtn = Instance.new("TextButton", LoginFrame)
+    VerifyBtn.Size, VerifyBtn.Position, VerifyBtn.AnchorPoint = UDim2.new(0, 280, 0, 45), UDim2.new(0.5, 0, 1, -25), Vector2.new(0.5, 1)
+    VerifyBtn.BackgroundColor3, VerifyBtn.TextColor3, VerifyBtn.Text = Color3.fromRGB(150, 20, 30), Color3.fromRGB(255, 255, 255), "VERIFY & ENTER"
+    VerifyBtn.Font, VerifyBtn.TextSize, VerifyBtn.AutoButtonColor = C_FONT, 18, false
+    Instance.new("UICorner", VerifyBtn).CornerRadius = UDim.new(0, 6)
+    local VBStroke = Instance.new("UIStroke", VerifyBtn)
+    VBStroke.Color, VBStroke.Thickness = Color3.fromRGB(255, 80, 80), 1.5
+
+    -- Status Text (แจ้งเตือน)
+    local StatusLbl = Instance.new("TextLabel", LoginFrame)
+    StatusLbl.Size, StatusLbl.Position, StatusLbl.BackgroundTransparency = UDim2.new(1, 0, 0, 20), UDim2.new(0, 0, 0, 80), 1
+    StatusLbl.Text, StatusLbl.TextColor3, StatusLbl.Font, StatusLbl.TextSize = "Welcome, " .. p.Name .. "!", Color3.fromRGB(150, 150, 150), C_FONT, 14
+
+    -- Hover effect ปุ่ม Login
+    VerifyBtn.MouseEnter:Connect(function() TS:Create(VerifyBtn, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(200, 40, 40)}):Play() end)
+    VerifyBtn.MouseLeave:Connect(function() TS:Create(VerifyBtn, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(150, 20, 30)}):Play() end)
+
+    -- ======================================================
+    -- 🖥️ MAIN UI SETUP (ซ่อนไว้ก่อน)
+    -- ======================================================
     local Main = Instance.new("Frame", UI)
     Main.AnchorPoint, Main.Position, Main.Size = Vector2.new(0.5,0.5), UDim2.new(0.5,0,0.5,0), UDim2.new(0,800,0,500)
     Main.BackgroundColor3, Main.ClipsDescendants = Color3.fromRGB(20, 20, 20), true
     Main.BackgroundTransparency = 0.2
+    Main.Visible = false -- ซ่อน UI หลักไว้จนกว่าจะ Login ผ่าน
     Instance.new("UICorner", Main).CornerRadius = UDim.new(0, 8)
 
     local MainScale = Instance.new("UIScale", Main)
-    MainScale.Scale = 1
+    MainScale.Scale = 0 -- ย่อขนาดไว้รอเด้งขึ้นมา
 
+    -- ระบบยืนยันคีย์
+    VerifyBtn.MouseButton1Click:Connect(function()
+        if KeyBox.Text == CORRECT_KEY and UserBox.Text ~= "" then
+            StatusLbl.Text = "ACCESS GRANTED!"
+            StatusLbl.TextColor3 = Color3.fromRGB(50, 255, 50)
+            VerifyBtn.Text = "LOADING..."
+            
+            task.wait(0.5)
+            isLoggedIn = true
+            uiOpen = true
+            
+            -- ปิดหน้า Login และเปิดหน้า Main
+            TS:Create(LoginFrame, ti, {BackgroundTransparency = 1}):Play()
+            for _, v in ipairs(LoginFrame:GetDescendants()) do
+                if v:IsA("TextLabel") or v:IsA("TextBox") or v:IsA("TextButton") then
+                    TS:Create(v, ti, {TextTransparency = 1, BackgroundTransparency = 1}):Play()
+                elseif v:IsA("UIStroke") then
+                    v.Transparency = 1
+                end
+            end
+            
+            task.wait(0.3)
+            LoginFrame.Visible = false
+            Main.Visible = true
+            TS:Create(MainScale, ti, {Scale = 1}):Play() -- เด้งหน้า UI หลักขึ้นมา
+        else
+            StatusLbl.Text = "INVALID KEY OR USERNAME!"
+            StatusLbl.TextColor3 = Color3.fromRGB(255, 50, 50)
+            
+            -- เด้งสั่นแจ้งเตือน (Shake effect)
+            local startPos = LoginFrame.Position
+            for i = 1, 5 do
+                LoginFrame.Position = startPos + UDim2.new(0, math.random(-10, 10), 0, 0)
+                task.wait(0.05)
+            end
+            LoginFrame.Position = startPos
+        end
+    end)
+
+
+    -- (โค้ดส่วน UI หลักด้านในยังคงเหมือนเดิมทั้งหมดครับ)
     local Top = Instance.new("Frame", Main)
     Top.Size, Top.BackgroundColor3, Top.ZIndex = UDim2.new(1,0,0,35), Color3.fromRGB(220, 220, 220), 10
     Instance.new("UICorner", Top).CornerRadius = UDim.new(0, 8)
@@ -75,12 +177,10 @@ return function(Config)
     Lbl.AnchorPoint, Lbl.Position, Lbl.Size = Vector2.new(0.5,0.5), UDim2.new(0.5,0,0.5,0), UDim2.new(0,100,1,-10)
     Lbl.BackgroundTransparency, Lbl.Text, Lbl.TextColor3, Lbl.Font, Lbl.TextSize = 1, UI_TITLE, Color3.fromRGB(50,50,50), C_FONT, 16
 
-    -- [[ BUTTONS ]]
     local SettingsBtn = Instance.new("TextButton", Top)
     SettingsBtn.AnchorPoint, SettingsBtn.Position, SettingsBtn.Size = Vector2.new(1,0.5), UDim2.new(1,-15,0.5,0), UDim2.new(0,25,0,25)
     SettingsBtn.BackgroundTransparency, SettingsBtn.Text, SettingsBtn.TextColor3, SettingsBtn.TextSize = 1, "⚙", Color3.fromRGB(100,100,100), 20
 
-    local uiOpen = true
     local MacP = Instance.new("Frame", Top)
     MacP.BackgroundTransparency, MacP.Position, MacP.AnchorPoint, MacP.Size = 1, UDim2.new(0,15,0.5,0), Vector2.new(0,0.5), UDim2.new(0,60,1,0)
     local MLo = Instance.new("UIListLayout", MacP)
@@ -111,6 +211,8 @@ return function(Config)
     end
 
     local function toggleUI()
+        if not isLoggedIn then return end -- ห้ามเปิด/ปิดถ้ายังไม่ล็อกอิน
+        
         uiOpen = not uiOpen
         if uiOpen then
             Main.Visible = true
@@ -136,13 +238,29 @@ return function(Config)
             inp.Changed:Connect(function() if inp.UserInputState == Enum.UserInputState.End then dragToggle = false end end)
         end
     end)
+    -- ทำให้ลากหน้า Login ได้ด้วย
+    LoginFrame.InputBegan:Connect(function(inp)
+        if inp.UserInputType == Enum.UserInputType.MouseButton1 or inp.UserInputType == Enum.UserInputType.Touch then
+            dragToggle, dragStart, startPos = true, inp.Position, LoginFrame.Position
+            inp.Changed:Connect(function() if inp.UserInputState == Enum.UserInputState.End then dragToggle = false end end)
+        end
+    end)
+
     Top.InputChanged:Connect(function(inp)
         if inp.UserInputType == Enum.UserInputType.MouseMovement or inp.UserInputType == Enum.UserInputType.Touch then dragInput = inp end
     end)
+    LoginFrame.InputChanged:Connect(function(inp)
+        if inp.UserInputType == Enum.UserInputType.MouseMovement or inp.UserInputType == Enum.UserInputType.Touch then dragInput = inp end
+    end)
+
     UIS.InputChanged:Connect(function(inp)
         if inp == dragInput and dragToggle then
             local delta = inp.Position - dragStart
-            Main.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+            if not isLoggedIn then
+                LoginFrame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+            else
+                Main.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+            end
         end
     end)
 
@@ -153,11 +271,9 @@ return function(Config)
     Grid.Size, Grid.BackgroundTransparency, Grid.Image, Grid.ImageColor3, Grid.ImageTransparency = UDim2.new(1,0,1,0), 1, BG_IMAGE, Color3.fromRGB(200,100,255), 0.8
     Grid.ScaleType, Grid.TileSize = Enum.ScaleType.Tile, UDim2.new(0,50,0,50)
 
-    -- [[ LEFT INVISIBLE BUTTON (ZOOM OUT) ]]
     local HBox = Instance.new("TextButton", Cont)
     HBox.AnchorPoint, HBox.Position, HBox.Size, HBox.BackgroundTransparency, HBox.Text, HBox.ZIndex = Vector2.new(0.5,0.5), UDim2.new(0.5,0,0.45,0), UDim2.new(0,350,0,350), 1, "", 5
 
-    -- [[ RIGHT PANEL ]]
     local RPane = Instance.new("Frame", Cont)
     RPane.AnchorPoint, RPane.Position, RPane.Size, RPane.ZIndex = Vector2.new(1,0.5), UDim2.new(1.5, 0, 0.45, 0), UDim2.new(0, 420, 0, 320), 5
     RPane.BackgroundColor3, RPane.BackgroundTransparency = Color3.fromRGB(25, 15, 40), 0.2
@@ -237,7 +353,6 @@ return function(Config)
         end
     end
 
-    -- [[ SETTINGS PANEL ]]
     local SetPnl = Instance.new("Frame", Main)
     SetPnl.Size, SetPnl.Position, SetPnl.BackgroundColor3 = UDim2.new(1,0,1,-35), UDim2.new(0,0,0,35), Color3.fromRGB(15,10,25)
     SetPnl.BackgroundTransparency, SetPnl.ZIndex, SetPnl.Visible, SetPnl.Active = 0.2, 100, false, true 
@@ -276,6 +391,10 @@ return function(Config)
         for _, obj in ipairs(Main:GetDescendants()) do
             if obj:IsA("TextLabel") or obj:IsA("TextButton") or obj:IsA("TextBox") then obj.Font = newFont end
         end
+        -- อัปเดตฟอนต์หน้า Login ด้วย
+        for _, obj in ipairs(LoginFrame:GetDescendants()) do
+            if obj:IsA("TextLabel") or obj:IsA("TextButton") or obj:IsA("TextBox") then obj.Font = newFont end
+        end
     end
 
     FontBtn.MouseButton1Click:Connect(function()
@@ -306,7 +425,9 @@ return function(Config)
             KeyBtn.Text = TOGGLE_KEY.Name
             isBinding = false
         elseif not gpe and inp.KeyCode == TOGGLE_KEY and not isBinding then
-            toggleUI()
+            if isLoggedIn then -- เปิด/ปิด UI ได้เฉพาะตอนล็อกอินผ่านแล้ว
+                toggleUI()
+            end
         end
     end)
 
@@ -315,15 +436,12 @@ return function(Config)
 
     -- [[ 🌟 NEON RED BOTTOM TABS UX 🌟 ]]
     local isPanelOpen = false
-    
-    -- 1. กรอบใหญ่ด้านล่าง (Container)
     local SlotP = Instance.new("Frame", Cont)
     SlotP.AnchorPoint, SlotP.Position = Vector2.new(0.5, 1), UDim2.new(0.5, 0, 1, -15)
     SlotP.Size, SlotP.BackgroundColor3 = UDim2.new(0, 680, 0, 55), Color3.fromRGB(15, 5, 20)
     SlotP.BackgroundTransparency, SlotP.ZIndex = 0.4, 6
     Instance.new("UICorner", SlotP).CornerRadius = UDim.new(0, 8)
     
-    -- เส้นขอบสีม่วงเรืองแสงรอบกรอบใหญ่
     local SStrk = Instance.new("UIStroke", SlotP)
     SStrk.Color, SStrk.Transparency, SStrk.Thickness = Color3.fromRGB(180, 80, 255), 0.2, 1.5 
     
@@ -331,15 +449,12 @@ return function(Config)
     LLo.FillDirection, LLo.Padding, LLo.HorizontalAlignment, LLo.VerticalAlignment = Enum.FillDirection.Horizontal, UDim.new(0, 10), Enum.HorizontalAlignment.Center, Enum.VerticalAlignment.Center
 
     for _, tabData in ipairs(FIXED_TABS) do
-        -- 2. ปุ่มกด (Buttons)
         local btn = Instance.new("TextButton", SlotP)
-        -- ทำให้ปุ่ม Back กว้างกว่าปุ่มอื่นนิดหน่อย ตามดีไซน์
         local btnWidth = (tabData.id == "Back") and 90 or 75
-        btn.Size, btn.BackgroundColor3 = UDim2.new(0, btnWidth, 0, 32), Color3.fromRGB(80, 15, 25) -- สีแดงเข้มมืดๆ
+        btn.Size, btn.BackgroundColor3 = UDim2.new(0, btnWidth, 0, 32), Color3.fromRGB(80, 15, 25) 
         btn.Text, btn.AutoButtonColor, btn.ZIndex = "", false, 7
         Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 6)
         
-        -- เส้นขอบสีแดง/ส้มสำหรับปุ่ม
         local BStrk = Instance.new("UIStroke", btn)
         BStrk.Color, BStrk.Transparency, BStrk.Thickness = Color3.fromRGB(200, 40, 40), 0.1, 1.2
 
@@ -347,7 +462,6 @@ return function(Config)
         lbl.Size, lbl.BackgroundTransparency, lbl.Text = UDim2.new(1,0,1,0), 1, tabData.n
         lbl.TextColor3, lbl.Font, lbl.TextSize, lbl.ZIndex = Color3.fromRGB(255,255,255), C_FONT, 11, 8
 
-        -- 3. Hover Effect (เปลี่ยนสีตอนเอาเมาส์ชี้ให้สว่างขึ้น)
         btn.MouseEnter:Connect(function() 
             TS:Create(BStrk, TweenInfo.new(0.2), {Color = Color3.fromRGB(255, 120, 50), Thickness = 2}):Play()
             TS:Create(btn, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(150, 20, 30)}):Play()
@@ -365,7 +479,6 @@ return function(Config)
             TS:Create(HBox, ti, {Position = UDim2.new(0.25, 0, 0.45, 0)}):Play()
             TS:Create(RPane, ti, {Position = UDim2.new(0.97, 0, 0.45, 0)}):Play()
 
-            -- ระบบล็อกกล้องและไฮไลต์ชิ้นส่วน
             local char = p.Character
             if not char or not char:FindFirstChild("HumanoidRootPart") then return end
             
@@ -395,7 +508,6 @@ return function(Config)
         end)
     end
 
-    -- ปุ่ม Zoom Out (กดพื้นที่ว่าง)
     HBox.MouseButton1Click:Connect(function()
         isPanelOpen = false
         TS:Create(HBox, ti, {Position = UDim2.new(0.5, 0, 0.45, 0)}):Play()
@@ -406,6 +518,13 @@ return function(Config)
     end)
 
     updateGlobalFont(C_FONT) 
+
+    -- ถ้าไม่ได้เปิดใช้ระบบคีย์ ให้เด้งหน้าหลักขึ้นมาเลย
+    if not USE_KEY then
+        uiOpen = true
+        Main.Visible = true
+        MainScale.Scale = 1
+    end
 
     return { UI = UI, Toggle = toggleUI, Destroy = function() if UI then UI:Destroy() end end }
 end
