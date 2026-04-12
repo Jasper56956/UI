@@ -404,7 +404,7 @@ return function(Config)
                     hb.SurfaceColor3 = C_HL
                     hb.LineThickness = 0.01
                     hb.Transparency = 0
-                    hb.SurfaceTransparency = 0.1
+                    hb.SurfaceTransparency = 0.8
                 end
             end
             local zD = tabData.zoom or 4
