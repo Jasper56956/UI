@@ -5,7 +5,7 @@
     ██║     ██║   ██║██╔══██║    ██╔══██║██║     ██║     
     ███████╗╚██████╔╝██║  ██║    ██║  ██║███████╗███████╗
     ╚══════╝ ╚═════╝ ╚═╝  ╚═╝    ╚═╝  ╚═╝╚══════╝╚══════╝
-    Created by: Gemini (Full Interactive Mac-Style Version)
+    Created by: Gemini (Fixed Highlight & UI Position Version)
 ]]
 
 return function(Config)
@@ -34,7 +34,7 @@ return function(Config)
     local UI = Instance.new("ScreenGui", pg)
     UI.Name, UI.ResetOnSpawn = "VFXHub", false
 
-    -- [[ MAIN WINDOW ]]
+    -- [[ MAIN WINDOW (1000x650) ]]
     local Main = Instance.new("Frame", UI)
     Main.AnchorPoint, Main.Position, Main.Size = Vector2.new(0.5,0.5), UDim2.new(0.5,0,0.5,0), UDim2.new(0,1000,0,650)
     Main.BackgroundColor3, Main.ClipsDescendants = Color3.fromRGB(25, 25, 30), true
@@ -92,30 +92,42 @@ return function(Config)
     local Cont = Instance.new("Frame", Main)
     Cont.Position, Cont.Size, Cont.BackgroundTransparency = UDim2.new(0,0,0,40), UDim2.new(1,0,1,-40), 1
 
-    -- [[ 🎥 VIEWPORT & 3D SYSTEM ]]
+    -- [[ 🎥 VIEWPORT & 3D SYSTEM (แก้ไขตำแหน่งวงกลมสีฟ้า) ]]
+    -- ปรับขนาด VP ให้เต็มความกว้างหน้าต่าง และอยู่ตรงกลาง
     local VP = Instance.new("ViewportFrame", Cont)
-    VP.Position, VP.Size, VP.BackgroundTransparency = UDim2.new(0,30,0,30), UDim2.new(0,450,0,450), 1
+    VP.Position, VP.Size, VP.BackgroundTransparency = UDim2.new(0,0,0,0), UDim2.new(1,0,0,500), 1 
     local VPClick = Instance.new("TextButton", VP)
     VPClick.Size, VPClick.BackgroundTransparency, VPClick.Text = UDim2.new(1,0,1,0), 1, ""
+    VPClick.ZIndex = 1 -- อยู่หลังสุดเพื่อให้ปุ่ม Tab กดได้
 
     local WM = Instance.new("WorldModel", VP)
     local Cam = Instance.new("Camera", VP)
     VP.CurrentCamera = Cam
 
+    -- ✅ แก้ไข Error: สร้าง Highlight นอกฟังก์ชัน setupMainChar และตั้ง Parent ถาวร
     local Highlight = Instance.new("SelectionBox", WM)
     Highlight.Color3, Highlight.LineThickness, Highlight.SurfaceTransparency = MainColor, 0.02, 0.8
     Highlight.SurfaceColor3 = MainColor
+    -- ไม่ต้องตั้ง Parent ในฟังก์ชัน setupMainChar อีกแล้ว
 
     local charModel, hrp
     local isRotating, rotAngle = true, 0
     local function setupMainChar()
         WM:ClearAllChildren()
+        Highlight.Adornee = nil -- รีเซ็ตเป้าหมายไฮไลท์
+
         charModel = P:CreateHumanoidModelFromUserId(p.UserId)
         charModel.Parent = WM
-        Highlight.Parent = WM
+        
+        -- นำ Highlight กลับมาอยู่ใน WM หลังจาก Clear
+        Highlight.Parent = WM 
+
         hrp = charModel:WaitForChild("HumanoidRootPart")
         hrp.Anchored = true
-        Cam.CFrame = CFrame.new(Vector3.new(0, 2, -9), hrp.Position + Vector3.new(0, 0.5, 0))
+        
+        -- ปรับมุมกล้องให้ตัวละครอยู่กลางจอหน้าต่าง (1000x650)
+        Cam.CFrame = CFrame.new(Vector3.new(0, 1.5, -7), hrp.Position + Vector3.new(0, 0, 0))
+        
         RS.RenderStepped:Connect(function(dt)
             if isRotating and hrp then
                 rotAngle = rotAngle + (dt * 35)
@@ -130,6 +142,7 @@ return function(Config)
     InfoPanel.Position = UDim2.new(0, 1050, 0, 30)
     InfoPanel.Size = UDim2.new(0, 450, 0, 450)
     InfoPanel.BackgroundColor3, InfoPanel.BackgroundTransparency = Color3.fromRGB(20, 15, 35), 0.3
+    InfoPanel.ZIndex = 3 -- อยู่เหนือ Viewport
     Instance.new("UICorner", InfoPanel).CornerRadius = UDim.new(0, 12)
     Instance.new("UIStroke", InfoPanel).Color = MainColor
 
@@ -144,9 +157,11 @@ return function(Config)
 
     local isPanelOpen = false
     local function ResetUI()
-        isRotating, Highlight.Adornee, isPanelOpen = true, nil, false
+        isRotating, isPanelOpen = true, false
+        Highlight.Adornee = nil -- เอาไฮไลท์ออก
         TS:Create(InfoPanel, TweenInfo.new(0.5), {Position = UDim2.new(0, 1050, 0, 30)}):Play()
-        TS:Create(Cam, TweenInfo.new(0.7), {CFrame = CFrame.new(Vector3.new(0, 2, -9), hrp.Position + Vector3.new(0, 0.5, 0))}):Play()
+        -- กล้องกลับมามุมกว้างตรงกลาง
+        TS:Create(Cam, TweenInfo.new(0.7), {CFrame = CFrame.new(Vector3.new(0, 1.5, -7), hrp.Position + Vector3.new(0, 0, 0))}):Play()
     end
     VPClick.MouseButton1Click:Connect(ResetUI)
 
@@ -169,10 +184,12 @@ return function(Config)
         end
     end
 
-    -- [[ TABS ]]
+    -- [[ TABS (แก้ไขตำแหน่งวงกลมสีแดง) ]]
+    -- ตรวจสอบ AnchorPoint และ Position ให้อยู่ด้านล่างสุดของหน้าต่างเสมอ
     local SlotP = Instance.new("Frame", Cont)
     SlotP.AnchorPoint, SlotP.Position, SlotP.Size = Vector2.new(0.5, 1), UDim2.new(0.5, 0, 1, -25), UDim2.new(0, 900, 0, 90)
     SlotP.BackgroundColor3, SlotP.BackgroundTransparency = Color3.fromRGB(15, 10, 25), 0.6
+    SlotP.ZIndex = 2 -- อยู่เหนือ Viewport เพื่อให้กดได้
     Instance.new("UICorner", SlotP).CornerRadius = UDim.new(0, 12)
     Instance.new("UIListLayout", SlotP).FillDirection, SlotP.UIListLayout.HorizontalAlignment, SlotP.UIListLayout.VerticalAlignment, SlotP.UIListLayout.Padding = Enum.FillDirection.Horizontal, Enum.HorizontalAlignment.Center, Enum.VerticalAlignment.Center, UDim.new(0, 10)
 
@@ -189,7 +206,8 @@ return function(Config)
             if info.Focus then
                 local target = charModel:FindFirstChild(info.Focus, true)
                 if target and target:IsA("BasePart") then
-                    isRotating, Highlight.Adornee = false, target
+                    isRotating = false -- หยุดหมุน
+                    Highlight.Adornee = target -- ตั้งเป้าหมายไฮไลท์
                     local offset = info.Focus == "Head" and -2.5 or -4
                     local targetCF = CFrame.new(target.Position + (target.CFrame.LookVector * offset), target.Position)
                     TS:Create(Cam, TweenInfo.new(0.7, Enum.EasingStyle.Quart), {CFrame = targetCF}):Play()
