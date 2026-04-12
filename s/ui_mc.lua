@@ -5,7 +5,7 @@
     ██║     ██║   ██║██╔══██║    ██╔══██║██║     ██║     
     ███████╗╚██████╔╝██║  ██║    ██║  ██║███████╗███████╗
     ╚══════╝ ╚═════╝ ╚═╝  ╚═╝    ╚═╝  ╚═╝╚══════╝╚══════╝
-    Library V2: Dynamic Boxes per Tab
+    Library V3: Fixed Tabs & Dynamic Box Count
 ]=]
 
 local P = game:GetService("Players")
@@ -28,13 +28,17 @@ return function(Config)
     local INFO_TITLE = Config.InfoTitle or "SYSTEM INFO"
     local VFX_TEXT = Config.HoverText or "VFX: Shadow Weaver\n* Click character to Zoom Out *"
     
-    -- โครงสร้างแท็บแบบใหม่ (ย้าย Boxes เข้ามาข้างในนี้)
-    local TABS = Config.Tabs or {
-        {n="หัว", t={"Head"}, angle=0, zoom=2, Boxes={}}, 
-        {n="ตัว", t={"Torso","UpperTorso","LowerTorso"}, angle=0, zoom=3.5, Boxes={}},
-        {n="แขน", t={"Right Arm","RightUpperArm"}, angle=0, zoom=3, Boxes={}},
-        {n="ขา", t={"Right Leg","RightUpperLeg"}, angle=0, zoom=3, Boxes={}},
-        {n="หลัง", t={"Torso","UpperTorso","LowerTorso"}, angle=180, zoom=3.5, Boxes={}}
+    local TAB_BOXES = Config.TabBoxes or {} -- ข้อมูลกล่องที่ดึงมาจาก Loadstring
+    
+    -- 🔒 FIXED TABS (ล็อคตายตัว ห้ามเพิ่ม/ลด)
+    local FIXED_TABS = {
+        {id="หัว", n="หัว", t={"Head"}, angle=0, zoom=2}, 
+        {id="ตัว", n="ตัว", t={"Torso","UpperTorso","LowerTorso"}, angle=0, zoom=3.5},
+        {id="แขนซ้าย", n="แขนซ้าย", t={"Left Arm","LeftUpperArm","LeftLowerArm","LeftHand"}, angle=0, zoom=3},
+        {id="แขนขวา", n="แขนขวา", t={"Right Arm","RightUpperArm","RightLowerArm","RightHand"}, angle=0, zoom=3},
+        {id="ขาซ้าย", n="ขาซ้าย", t={"Left Leg","LeftUpperLeg","LeftLowerLeg","LeftFoot"}, angle=0, zoom=3},
+        {id="ขาขวา", n="ขาขวา", t={"Right Leg","RightUpperLeg","RightLowerLeg","RightFoot"}, angle=0, zoom=3},
+        {id="หลัง", n="หลัง", t={"Torso","UpperTorso","LowerTorso"}, angle=180, zoom=3.5}
     }
 
     local p = P.LocalPlayer
@@ -150,18 +154,17 @@ return function(Config)
     local BoxListLayout = Instance.new("UIListLayout", BoxContainer)
     BoxListLayout.FillDirection, BoxListLayout.Padding, BoxListLayout.HorizontalAlignment, BoxListLayout.VerticalAlignment = Enum.FillDirection.Horizontal, UDim.new(0, 20), Enum.HorizontalAlignment.Center, Enum.VerticalAlignment.Center
 
-    -- ฟังก์ชันสำหรับสร้างกล่อง 4 ช่องใหม่ตามข้อมูลของแต่ละ Tab
+    -- ✅ ฟังก์ชันสร้างกล่อง (จะสร้างแค่ตามจำนวนที่มีข้อมูลใน Loadstring เท่านั้น)
     local function RenderBoxes(boxDataList)
-        -- ลบกล่องเก่าทิ้งก่อน (ยกเว้น UIListLayout)
+        -- ลบกล่องเก่าทิ้ง
         for _, v in ipairs(BoxContainer:GetChildren()) do
             if v:IsA("Frame") then v:Destroy() end
         end
         
         boxDataList = boxDataList or {}
         
-        -- สร้างกล่องขึ้นมา 4 กล่องเสมอเพื่อรักษารูปแบบ UI
-        for i = 1, 4 do
-            local data = boxDataList[i] or {}
+        -- วนลูปสร้างตามจำนวนที่มีใน Table จริงๆ
+        for _, data in ipairs(boxDataList) do
             local slot = Instance.new("Frame", BoxContainer)
             slot.Size, slot.BackgroundColor3, slot.BackgroundTransparency = UDim2.new(0, 80, 0, 90), Color3.fromRGB(35, 20, 50), 0.5
             Instance.new("UICorner", slot).CornerRadius = UDim.new(0, 6)
@@ -238,7 +241,8 @@ return function(Config)
     local LLo = Instance.new("UIListLayout", SlotP)
     LLo.FillDirection, LLo.Padding, LLo.HorizontalAlignment, LLo.VerticalAlignment = Enum.FillDirection.Horizontal, UDim.new(0,8), Enum.HorizontalAlignment.Center, Enum.VerticalAlignment.Center
 
-    for _, tabData in ipairs(TABS) do
+    -- ใช้ FIXED_TABS ที่ล็อคตายตัว
+    for _, tabData in ipairs(FIXED_TABS) do
         local btn = Instance.new("TextButton", SlotP)
         btn.Size, btn.BackgroundColor3, btn.Text, btn.AutoButtonColor = UDim2.new(0,50,0,50), C_ON, "", false
         Instance.new("UICorner", btn).CornerRadius = UDim.new(0,8)
@@ -260,8 +264,9 @@ return function(Config)
 
             RTit.Text = "ข้อมูลส่วน: " .. tabData.n
             
-            -- โหลดกล่องใหม่เฉพาะของ Tab นี้
-            RenderBoxes(tabData.Boxes)
+            -- ดึงข้อมูลกล่องจาก Config.TabBoxes โดยใช้ชื่อแท็บ (id) เป็นกุญแจหลัก
+            local currentBoxes = TAB_BOXES[tabData.id] or {}
+            RenderBoxes(currentBoxes)
 
             TS:Create(VP, ti, {Position = UDim2.new(0.25, 0, 0.45, 0)}):Play()
             TS:Create(HBox, ti, {Position = UDim2.new(0.25, 0, 0.45, 0)}):Play()
