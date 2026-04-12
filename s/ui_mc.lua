@@ -318,17 +318,6 @@ return function(Config)
     SettingsBtn.MouseButton1Click:Connect(function() SetPnl.Visible = true end)
     SetClose.MouseButton1Click:Connect(function() SetPnl.Visible = false end)
 
-    -- [[ HOVER INFO PANEL ]]
-    local Info = Instance.new("Frame", Cont)
-    Info.AnchorPoint, Info.Position, Info.Size, Info.BackgroundColor3, Info.BackgroundTransparency, Info.Visible = Vector2.new(1,0.5), UDim2.new(1,-20,0.45,0), UDim2.new(0,300,0,150), Color3.fromRGB(20,10,30), 1, false
-    Instance.new("UICorner", Info).CornerRadius = UDim.new(0,4)
-    local IStrk = Instance.new("UIStroke", Info)
-    IStrk.Color, IStrk.Transparency = C_BASE, 1
-    local ITit = Instance.new("TextLabel", Info)
-    ITit.Size, ITit.Position, ITit.BackgroundTransparency, ITit.Text, ITit.TextColor3, ITit.Font, ITit.TextSize, ITit.TextTransparency, ITit.TextXAlignment = UDim2.new(1,0,0,30), UDim2.new(0,10,0,5), 1, "CHAR: "..p.Name:upper(), Color3.fromRGB(230,230,255), C_FONT, 14, 1, Enum.TextXAlignment.Left
-    local IVFX = Instance.new("TextLabel", Info)
-    IVFX.Size, IVFX.Position, IVFX.BackgroundTransparency, IVFX.Text, IVFX.TextColor3, IVFX.Font, IVFX.TextSize, IVFX.TextTransparency, IVFX.TextXAlignment, IVFX.TextYAlignment = UDim2.new(1,-20,0,60), UDim2.new(0,10,0,35), 1, VFX_TEXT, C_BASE, C_FONT, 12, 1, Enum.TextXAlignment.Left, Enum.TextYAlignment.Top
-
     -- [[ BOTTOM TABS LOGIC & CAMERA MANIPULATION ]]
     local isPanelOpen = false
     local SlotP = Instance.new("Frame", Cont)
