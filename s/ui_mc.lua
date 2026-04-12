@@ -343,7 +343,15 @@ return function(Config)
                 if part and part:IsA("BasePart") then
                     fp = part
                     local hb = Instance.new("SelectionBox", part)
-                    hb.Name, hb.Adornee, hb.Color3, hb.SurfaceTransparency = "VFXHub_Highlight", part, C_HL, 0.2
+                    hb.Name = "VFXHub_Highlight"
+                    hb.Adornee = part
+                    hb.Color3 = C_HL
+                    hb.SurfaceColor3 = C_HL
+
+                    -- 👇 ปรับความเข้มและความหนาตรงนี้ได้เลยครับ 👇
+                    hb.LineThickness = 0.05        -- ความหนาของเส้นขอบ (ค่ายิ่งเยอะ เส้นยิ่งหนา แนะนำประมาณ 0.03 ถึง 0.1)
+                    hb.Transparency = 0            -- ความโปร่งใสของเส้นขอบ (0 = เข้มชัดสุด 100%, 1 = จางหายไปเลย)
+                    hb.SurfaceTransparency = 0.7   -- ความโปร่งใสของสีทึบที่คลุมผิวชิ้นส่วน (0.7 คือใสๆ ถ้าปรับ 0.3 จะเห็นผิวเรืองแสงทึบๆ ชัดมาก)
                 end
             end
             local zD = tabData.zoom or 4
