@@ -5,7 +5,7 @@
     ██║     ██║   ██║██╔══██║    ██╔══██║██║     ██║     
     ███████╗╚██████╔╝██║  ██║    ██║  ██║███████╗███████╗
     ╚══════╝ ╚═════╝ ╚═╝  ╚═╝    ╚═╝  ╚═╝╚══════╝╚══════╝
-    Library V4: English Tabs & Settings Panel
+    Library V4.1: Settings Panel Fixed (Top ZIndex & No Click-Through)
 ]=]
 
 local P = game:GetService("Players")
@@ -31,7 +31,7 @@ return function(Config)
     
     local TAB_BOXES = Config.TabBoxes or {}
     
-    -- 🔒 FIXED TABS (English Names)
+    -- 🔒 FIXED TABS
     local FIXED_TABS = {
         {id="Head", n="Head", t={"Head"}, angle=0, zoom=2}, 
         {id="Torso", n="Torso", t={"Torso","UpperTorso","LowerTorso"}, angle=0, zoom=3.5},
@@ -51,6 +51,7 @@ return function(Config)
     -- [[ UI SETUP ]]
     local UI = Instance.new("ScreenGui", pg)
     UI.Name, UI.ResetOnSpawn = "VFXHub", false
+    UI.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 
     local Main = Instance.new("Frame", UI)
     Main.AnchorPoint, Main.Position, Main.Size = Vector2.new(0.5,0.5), UDim2.new(0.5,0,0.5,0), UDim2.new(0,800,0,500)
@@ -61,7 +62,7 @@ return function(Config)
     MainScale.Scale = 1
 
     local Top = Instance.new("Frame", Main)
-    Top.Size, Top.BackgroundColor3 = UDim2.new(1,0,0,35), Color3.fromRGB(220, 220, 220)
+    Top.Size, Top.BackgroundColor3, Top.ZIndex = UDim2.new(1,0,0,35), Color3.fromRGB(220, 220, 220), 10
     Instance.new("UICorner", Top).CornerRadius = UDim.new(0, 8)
 
     local TClip = Instance.new("Frame", Top)
@@ -143,7 +144,7 @@ return function(Config)
 
     -- [[ RIGHT PANEL (BOXES) ]]
     local RPane = Instance.new("Frame", Cont)
-    RPane.AnchorPoint, RPane.Position, RPane.Size = Vector2.new(1,0.5), UDim2.new(1.5, 0, 0.45, 0), UDim2.new(0, 420, 0, 320)
+    RPane.AnchorPoint, RPane.Position, RPane.Size, RPane.ZIndex = Vector2.new(1,0.5), UDim2.new(1.5, 0, 0.45, 0), UDim2.new(0, 420, 0, 320), 5
     RPane.BackgroundColor3, RPane.BackgroundTransparency = Color3.fromRGB(25, 15, 40), 0.2
     Instance.new("UICorner", RPane).CornerRadius = UDim.new(0, 8)
     local RStrk = Instance.new("UIStroke", RPane)
@@ -179,29 +180,36 @@ return function(Config)
         end
     end
 
-    -- [[ SETTINGS PANEL OVERLAY ]]
-    local SetPnl = Instance.new("Frame", Cont)
-    SetPnl.Size, SetPnl.Position, SetPnl.BackgroundColor3, SetPnl.BackgroundTransparency, SetPnl.ZIndex, SetPnl.Visible = UDim2.new(1,0,1,0), UDim2.new(0,0,0,0), Color3.fromRGB(15,10,25), 0.1, 10, false
+    -- [[ 🛠️ SETTINGS PANEL OVERLAY (FIXED Z-INDEX & ACTIVE) ]]
+    -- ย้าย SetPnl มาไว้ที่ Main เพื่อให้อยู่ทับ Cont ทั้งหมด และตั้ง Active = true กันการคลิกทะลุ
+    local SetPnl = Instance.new("Frame", Main)
+    SetPnl.Size, SetPnl.Position, SetPnl.BackgroundColor3 = UDim2.new(1,0,1,-35), UDim2.new(0,0,0,35), Color3.fromRGB(15,10,25)
+    SetPnl.BackgroundTransparency, SetPnl.ZIndex, SetPnl.Visible, SetPnl.Active = 0.2, 100, false, true 
     
     local SetBox = Instance.new("Frame", SetPnl)
-    SetBox.Size, SetBox.AnchorPoint, SetBox.Position, SetBox.BackgroundColor3 = UDim2.new(0,350,0,250), Vector2.new(0.5,0.5), UDim2.new(0.5,0,0.5,0), Color3.fromRGB(35,20,50)
+    SetBox.Size, SetBox.AnchorPoint, SetBox.Position = UDim2.new(0,350,0,250), Vector2.new(0.5,0.5), UDim2.new(0.5,0,0.5,0)
+    SetBox.BackgroundColor3, SetBox.ZIndex, SetBox.Active = Color3.fromRGB(35,20,50), 101, true
     Instance.new("UICorner", SetBox).CornerRadius = UDim.new(0,8)
     local SetStrk = Instance.new("UIStroke", SetBox)
     SetStrk.Color, SetStrk.Thickness = C_BASE, 2
     
     local SetTitle = Instance.new("TextLabel", SetBox)
-    SetTitle.Size, SetTitle.Position, SetTitle.BackgroundTransparency, SetTitle.Text, SetTitle.TextColor3, SetTitle.Font, SetTitle.TextSize = UDim2.new(1,0,0,50), UDim2.new(0,0,0,0), 1, "SETTINGS", Color3.fromRGB(255,255,255), C_FONT, 20
+    SetTitle.Size, SetTitle.Position, SetTitle.BackgroundTransparency, SetTitle.Text = UDim2.new(1,0,0,50), UDim2.new(0,0,0,0), 1, "SETTINGS"
+    SetTitle.TextColor3, SetTitle.Font, SetTitle.TextSize, SetTitle.ZIndex = Color3.fromRGB(255,255,255), C_FONT, 20, 102
     
     local SetClose = Instance.new("TextButton", SetBox)
-    SetClose.Size, SetClose.AnchorPoint, SetClose.Position, SetClose.BackgroundColor3, SetClose.Text, SetClose.TextColor3, SetClose.Font = UDim2.new(0,100,0,35), Vector2.new(0.5,1), UDim2.new(0.5,0,1,-20), C_ON, "Close", Color3.fromRGB(255,255,255), C_FONT
+    SetClose.Size, SetClose.AnchorPoint, SetClose.Position, SetClose.BackgroundColor3 = UDim2.new(0,100,0,35), Vector2.new(0.5,1), UDim2.new(0.5,0,1,-20), C_ON
+    SetClose.Text, SetClose.TextColor3, SetClose.Font, SetClose.ZIndex = "Close", Color3.fromRGB(255,255,255), C_FONT, 102
     Instance.new("UICorner", SetClose).CornerRadius = UDim.new(0,6)
     
     -- Font Setting
     local FontLbl = Instance.new("TextLabel", SetBox)
-    FontLbl.Size, FontLbl.Position, FontLbl.BackgroundTransparency, FontLbl.Text, FontLbl.TextColor3, FontLbl.Font, FontLbl.TextSize, FontLbl.TextXAlignment = UDim2.new(0,100,0,30), UDim2.new(0,30,0,70), 1, "UI Font:", Color3.fromRGB(220,220,220), C_FONT, 16, Enum.TextXAlignment.Left
+    FontLbl.Size, FontLbl.Position, FontLbl.BackgroundTransparency, FontLbl.Text = UDim2.new(0,100,0,30), UDim2.new(0,30,0,70), 1, "UI Font:"
+    FontLbl.TextColor3, FontLbl.Font, FontLbl.TextSize, FontLbl.TextXAlignment, FontLbl.ZIndex = Color3.fromRGB(220,220,220), C_FONT, 16, Enum.TextXAlignment.Left, 102
     
     local FontBtn = Instance.new("TextButton", SetBox)
-    FontBtn.Size, FontBtn.Position, FontBtn.BackgroundColor3, FontBtn.Text, FontBtn.TextColor3, FontBtn.Font, FontBtn.TextSize = UDim2.new(0,150,0,30), UDim2.new(0,170,0,70), Color3.fromRGB(50,35,75), C_FONT.Name, C_HL, C_FONT, 14
+    FontBtn.Size, FontBtn.Position, FontBtn.BackgroundColor3, FontBtn.Text = UDim2.new(0,150,0,30), UDim2.new(0,170,0,70), Color3.fromRGB(50,35,75), C_FONT.Name
+    FontBtn.TextColor3, FontBtn.Font, FontBtn.TextSize, FontBtn.ZIndex = C_HL, C_FONT, 14, 102
     Instance.new("UICorner", FontBtn).CornerRadius = UDim.new(0,4)
     
     local FontList = {Enum.Font.GothamMedium, Enum.Font.Roboto, Enum.Font.Ubuntu, Enum.Font.SciFi, Enum.Font.Arcade, Enum.Font.Code}
@@ -226,10 +234,12 @@ return function(Config)
 
     -- Keybind Setting
     local KeyLbl = Instance.new("TextLabel", SetBox)
-    KeyLbl.Size, KeyLbl.Position, KeyLbl.BackgroundTransparency, KeyLbl.Text, KeyLbl.TextColor3, KeyLbl.Font, KeyLbl.TextSize, KeyLbl.TextXAlignment = UDim2.new(0,100,0,30), UDim2.new(0,30,0,120), 1, "Toggle Key:", Color3.fromRGB(220,220,220), C_FONT, 16, Enum.TextXAlignment.Left
+    KeyLbl.Size, KeyLbl.Position, KeyLbl.BackgroundTransparency, KeyLbl.Text = UDim2.new(0,100,0,30), UDim2.new(0,30,0,120), 1, "Toggle Key:"
+    KeyLbl.TextColor3, KeyLbl.Font, KeyLbl.TextSize, KeyLbl.TextXAlignment, KeyLbl.ZIndex = Color3.fromRGB(220,220,220), C_FONT, 16, Enum.TextXAlignment.Left, 102
     
     local KeyBtn = Instance.new("TextButton", SetBox)
-    KeyBtn.Size, KeyBtn.Position, KeyBtn.BackgroundColor3, KeyBtn.Text, KeyBtn.TextColor3, KeyBtn.Font, KeyBtn.TextSize = UDim2.new(0,150,0,30), UDim2.new(0,170,0,120), Color3.fromRGB(50,35,75), TOGGLE_KEY.Name, C_HL, C_FONT, 14
+    KeyBtn.Size, KeyBtn.Position, KeyBtn.BackgroundColor3, KeyBtn.Text = UDim2.new(0,150,0,30), UDim2.new(0,170,0,120), Color3.fromRGB(50,35,75), TOGGLE_KEY.Name
+    KeyBtn.TextColor3, KeyBtn.Font, KeyBtn.TextSize, KeyBtn.ZIndex = C_HL, C_FONT, 14, 102
     Instance.new("UICorner", KeyBtn).CornerRadius = UDim.new(0,4)
 
     local isBinding = false
@@ -305,7 +315,7 @@ return function(Config)
 
     -- [[ BOTTOM TABS LOGIC ]]
     local SlotP = Instance.new("Frame", Cont)
-    SlotP.AnchorPoint, SlotP.Position, SlotP.Size, SlotP.BackgroundColor3, SlotP.BackgroundTransparency = Vector2.new(0.5,1), UDim2.new(0.5,0,1,-20), UDim2.new(0,450,0,70), Color3.fromRGB(25,15,40), 0.4
+    SlotP.AnchorPoint, SlotP.Position, SlotP.Size, SlotP.BackgroundColor3, SlotP.BackgroundTransparency, SlotP.ZIndex = Vector2.new(0.5,1), UDim2.new(0.5,0,1,-20), UDim2.new(0,450,0,70), Color3.fromRGB(25,15,40), 0.4, 6
     Instance.new("UICorner", SlotP).CornerRadius = UDim.new(0,6)
     local SStrk = Instance.new("UIStroke", SlotP)
     SStrk.Color, SStrk.Transparency = C_BASE, 0.6
@@ -314,10 +324,10 @@ return function(Config)
 
     for _, tabData in ipairs(FIXED_TABS) do
         local btn = Instance.new("TextButton", SlotP)
-        btn.Size, btn.BackgroundColor3, btn.Text, btn.AutoButtonColor = UDim2.new(0,50,0,50), C_ON, "", false
+        btn.Size, btn.BackgroundColor3, btn.Text, btn.AutoButtonColor, btn.ZIndex = UDim2.new(0,50,0,50), C_ON, "", false, 7
         Instance.new("UICorner", btn).CornerRadius = UDim.new(0,8)
         local lbl = Instance.new("TextLabel", btn)
-        lbl.Size, lbl.BackgroundTransparency, lbl.Text, lbl.TextColor3, lbl.Font, lbl.TextSize = UDim2.new(1,0,1,0), 1, tabData.n, Color3.fromRGB(255,255,255), C_FONT, 10
+        lbl.Size, lbl.BackgroundTransparency, lbl.Text, lbl.TextColor3, lbl.Font, lbl.TextSize, lbl.ZIndex = UDim2.new(1,0,1,0), 1, tabData.n, Color3.fromRGB(255,255,255), C_FONT, 10, 8
 
         btn.MouseEnter:Connect(function()
             TS:Create(btn, TweenInfo.new(0.2), {BackgroundColor3 = C_HOV}):Play()
@@ -401,7 +411,7 @@ return function(Config)
         task.delay(0.4, function() rotAngle = 0 isIdle = true end)
     end)
 
-    updateGlobalFont(C_FONT) -- Apply initial font to all texts
+    updateGlobalFont(C_FONT) 
 
     return { UI = UI, Toggle = toggleUI, Destroy = function() if UI then UI:Destroy() end end }
 end
