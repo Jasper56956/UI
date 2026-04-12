@@ -5,7 +5,7 @@
     ██║     ██║   ██║██╔══██║    ██╔══██║██║     ██║     
     ███████╗╚██████╔╝██║  ██║    ██║  ██║███████╗███████╗
     ╚══════╝ ╚═════╝ ╚═╝  ╚═╝    ╚═╝  ╚═╝╚══════╝╚══════╝
-    Library V8: Clean UI, Live Camera & Body Part Highlight
+    Library V9: Neon Red UX Bottom Bar & Live Body Highlight
 ]=]
 
 local P = game:GetService("Players")
@@ -22,7 +22,6 @@ return function(Config)
     local C_BASE = Config.BaseColor or Color3.fromRGB(160, 80, 255)     
     local C_HL = Config.HighlightColor or Color3.fromRGB(100, 255, 255) 
     local C_ON = Config.ButtonColor or Color3.fromRGB(100, 70, 150)
-    local C_HOV = Config.HoverColor or Color3.fromRGB(150, 120, 200)
     local BG_IMAGE = Config.BackgroundImage or "rbxassetid://277037193"
     
     local TOGGLE_KEY = Config.ToggleKey or Enum.KeyCode.RightControl
@@ -97,13 +96,10 @@ return function(Config)
     local mMin = mkMac(Color3.fromRGB(255, 189, 46)) 
     local mMax = mkMac(Color3.fromRGB(39, 201, 63))  
 
-    -- 🌟 ฟังก์ชันล้างไฮไลต์และพรีวิว
     local function clearHighlights()
         if p.Character then
             for _, v in ipairs(p.Character:GetDescendants()) do
-                if v.Name == "VFXHub_Highlight" then
-                    v:Destroy()
-                end
+                if v.Name == "VFXHub_Highlight" then v:Destroy() end
             end
         end
     end
@@ -317,25 +313,49 @@ return function(Config)
     SettingsBtn.MouseButton1Click:Connect(function() SetPnl.Visible = true end)
     SetClose.MouseButton1Click:Connect(function() SetPnl.Visible = false end)
 
-    -- [[ BOTTOM TABS LOGIC & CAMERA MANIPULATION ]]
+    -- [[ 🌟 NEON RED BOTTOM TABS UX 🌟 ]]
     local isPanelOpen = false
+    
+    -- 1. กรอบใหญ่ด้านล่าง (Container)
     local SlotP = Instance.new("Frame", Cont)
-    SlotP.AnchorPoint, SlotP.Position, SlotP.Size, SlotP.BackgroundColor3, SlotP.BackgroundTransparency, SlotP.ZIndex = Vector2.new(0.5,1), UDim2.new(0.5,0,1,-20), UDim2.new(0,450,0,70), Color3.fromRGB(25,15,40), 0.4, 6
-    Instance.new("UICorner", SlotP).CornerRadius = UDim.new(0,6)
+    SlotP.AnchorPoint, SlotP.Position = Vector2.new(0.5, 1), UDim2.new(0.5, 0, 1, -15)
+    SlotP.Size, SlotP.BackgroundColor3 = UDim2.new(0, 680, 0, 55), Color3.fromRGB(15, 5, 20)
+    SlotP.BackgroundTransparency, SlotP.ZIndex = 0.4, 6
+    Instance.new("UICorner", SlotP).CornerRadius = UDim.new(0, 8)
+    
+    -- เส้นขอบสีม่วงเรืองแสงรอบกรอบใหญ่
     local SStrk = Instance.new("UIStroke", SlotP)
-    SStrk.Color, SStrk.Transparency = C_BASE, 0.6
+    SStrk.Color, SStrk.Transparency, SStrk.Thickness = Color3.fromRGB(180, 80, 255), 0.2, 1.5 
+    
     local LLo = Instance.new("UIListLayout", SlotP)
-    LLo.FillDirection, LLo.Padding, LLo.HorizontalAlignment, LLo.VerticalAlignment = Enum.FillDirection.Horizontal, UDim.new(0,8), Enum.HorizontalAlignment.Center, Enum.VerticalAlignment.Center
+    LLo.FillDirection, LLo.Padding, LLo.HorizontalAlignment, LLo.VerticalAlignment = Enum.FillDirection.Horizontal, UDim.new(0, 10), Enum.HorizontalAlignment.Center, Enum.VerticalAlignment.Center
 
     for _, tabData in ipairs(FIXED_TABS) do
+        -- 2. ปุ่มกด (Buttons)
         local btn = Instance.new("TextButton", SlotP)
-        btn.Size, btn.BackgroundColor3, btn.Text, btn.AutoButtonColor, btn.ZIndex = UDim2.new(0,50,0,50), C_ON, "", false, 7
-        Instance.new("UICorner", btn).CornerRadius = UDim.new(0,8)
-        local lbl = Instance.new("TextLabel", btn)
-        lbl.Size, lbl.BackgroundTransparency, lbl.Text, lbl.TextColor3, lbl.Font, lbl.TextSize, lbl.ZIndex = UDim2.new(1,0,1,0), 1, tabData.n, Color3.fromRGB(255,255,255), C_FONT, 10, 8
+        -- ทำให้ปุ่ม Back กว้างกว่าปุ่มอื่นนิดหน่อย ตามดีไซน์
+        local btnWidth = (tabData.id == "Back") and 90 or 75
+        btn.Size, btn.BackgroundColor3 = UDim2.new(0, btnWidth, 0, 32), Color3.fromRGB(80, 15, 25) -- สีแดงเข้มมืดๆ
+        btn.Text, btn.AutoButtonColor, btn.ZIndex = "", false, 7
+        Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 6)
+        
+        -- เส้นขอบสีแดง/ส้มสำหรับปุ่ม
+        local BStrk = Instance.new("UIStroke", btn)
+        BStrk.Color, BStrk.Transparency, BStrk.Thickness = Color3.fromRGB(200, 40, 40), 0.1, 1.2
 
-        btn.MouseEnter:Connect(function() TS:Create(btn, TweenInfo.new(0.2), {BackgroundColor3 = C_HOV}):Play() end)
-        btn.MouseLeave:Connect(function() TS:Create(btn, TweenInfo.new(0.2), {BackgroundColor3 = C_ON}):Play() end)
+        local lbl = Instance.new("TextLabel", btn)
+        lbl.Size, lbl.BackgroundTransparency, lbl.Text = UDim2.new(1,0,1,0), 1, tabData.n
+        lbl.TextColor3, lbl.Font, lbl.TextSize, lbl.ZIndex = Color3.fromRGB(255,255,255), C_FONT, 11, 8
+
+        -- 3. Hover Effect (เปลี่ยนสีตอนเอาเมาส์ชี้ให้สว่างขึ้น)
+        btn.MouseEnter:Connect(function() 
+            TS:Create(BStrk, TweenInfo.new(0.2), {Color = Color3.fromRGB(255, 120, 50), Thickness = 2}):Play()
+            TS:Create(btn, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(150, 20, 30)}):Play()
+        end)
+        btn.MouseLeave:Connect(function() 
+            TS:Create(BStrk, TweenInfo.new(0.2), {Color = Color3.fromRGB(200, 40, 40), Thickness = 1.2}):Play()
+            TS:Create(btn, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(80, 15, 25)}):Play()
+        end)
         
         btn.MouseButton1Click:Connect(function()
             isPanelOpen = true
@@ -345,12 +365,12 @@ return function(Config)
             TS:Create(HBox, ti, {Position = UDim2.new(0.25, 0, 0.45, 0)}):Play()
             TS:Create(RPane, ti, {Position = UDim2.new(0.97, 0, 0.45, 0)}):Play()
 
-            -- 🎥 ระบบล็อกกล้องและไฮไลต์ชิ้นส่วน
+            -- ระบบล็อกกล้องและไฮไลต์ชิ้นส่วน
             local char = p.Character
             if not char or not char:FindFirstChild("HumanoidRootPart") then return end
             
             camera.CameraType = Enum.CameraType.Scriptable
-            clearHighlights() -- ล้างแสงไฮไลต์อันเก่าออกก่อน
+            clearHighlights()
 
             local fp = char.HumanoidRootPart
             for _, pName in ipairs(tabData.t) do
@@ -358,7 +378,6 @@ return function(Config)
                 if part and part:IsA("BasePart") then
                     fp = part
                     
-                    -- 🌟 สร้างกรอบเรืองแสงให้ชิ้นส่วนที่ถูกเลือก
                     local hlBox = Instance.new("SelectionBox")
                     hlBox.Name = "VFXHub_Highlight"
                     hlBox.Adornee = part
@@ -376,14 +395,14 @@ return function(Config)
         end)
     end
 
-    -- ปุ่ม Zoom Out
+    -- ปุ่ม Zoom Out (กดพื้นที่ว่าง)
     HBox.MouseButton1Click:Connect(function()
         isPanelOpen = false
         TS:Create(HBox, ti, {Position = UDim2.new(0.5, 0, 0.45, 0)}):Play()
         TS:Create(RPane, ti, {Position = UDim2.new(1.5, 0, 0.45, 0)}):Play()
         
         camera.CameraType = Enum.CameraType.Custom
-        clearHighlights() -- ล้างไฮไลต์ตอนซูมออก
+        clearHighlights()
     end)
 
     updateGlobalFont(C_FONT) 
