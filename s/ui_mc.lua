@@ -428,4 +428,4 @@ return function(Config)
     updateGlobalFont(C_FONT) 
 
     return { UI = UI, Toggle = toggleUI, Destroy = function() if UI then UI:Destroy() end end }
-end
+enddf
