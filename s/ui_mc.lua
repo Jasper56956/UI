@@ -5,104 +5,79 @@
     ██║     ██║   ██║██╔══██║    ██╔══██║██║     ██║     
     ███████╗╚██████╔╝██║  ██║    ██║  ██║███████╗███████╗
     ╚══════╝ ╚═════╝ ╚═╝  ╚═╝    ╚═╝  ╚═╝╚══════╝╚══════╝
-    Library V7: Live Camera Manipulation & Real Character Preview
+    Library V8: Home Page Menu & Left Image Preview
 ]=]
 
 local P = game:GetService("Players")
 local TS = game:GetService("TweenService")
-local RS = game:GetService("RunService")
 local UIS = game:GetService("UserInputService")
-local WS = game:GetService("Workspace")
 
 return function(Config)
     Config = Config or {}
 
     -- [[ ⚙️ CONFIGURATION VARIABLES ]]
-    local UI_TITLE = Config.Title or "Hub"
+    local UI_TITLE = Config.Title or "VFX Hub"
     local C_BASE = Config.BaseColor or Color3.fromRGB(160, 80, 255)     
     local C_HL = Config.HighlightColor or Color3.fromRGB(100, 255, 255) 
-    local C_ON = Config.ButtonColor or Color3.fromRGB(100, 70, 150)
-    local C_HOV = Config.HoverColor or Color3.fromRGB(150, 120, 200)
+    local C_ON = Config.ButtonColor or Color3.fromRGB(45, 25, 65)
+    local C_HOV = Config.HoverColor or Color3.fromRGB(80, 50, 120)
     local BG_IMAGE = Config.BackgroundImage or "rbxassetid://277037193"
     
     local TOGGLE_KEY = Config.ToggleKey or Enum.KeyCode.RightControl
     local C_FONT = Config.Font or Enum.Font.GothamMedium
-    local INFO_TITLE = Config.InfoTitle or "SYSTEM INFO"
-    local VFX_TEXT = Config.HoverText or "VFX: Shadow Weaver\n* Click character to Zoom Out *"
     
     local TAB_BOXES = Config.TabBoxes or {}
     
-    -- 🔒 FIXED TABS (ปรับ Zoom ให้เหมาะกับกล้องจริง)
-    local FIXED_TABS = {
-        {id="Head", n="Head", t={"Head"}, angle=0, zoom=3}, 
-        {id="Torso", n="Torso", t={"Torso","UpperTorso","LowerTorso"}, angle=0, zoom=6},
-        {id="Left Arm", n="Left Arm", t={"Left Arm","LeftUpperArm","LeftLowerArm","LeftHand"}, angle=0, zoom=5},
-        {id="Right Arm", n="Right Arm", t={"Right Arm","RightUpperArm","RightLowerArm","RightHand"}, angle=0, zoom=5},
-        {id="Left Leg", n="Left Leg", t={"Left Leg","LeftUpperLeg","LeftLowerLeg","LeftFoot"}, angle=0, zoom=5},
-        {id="Right Leg", n="Right Leg", t={"Right Leg","RightUpperLeg","RightLowerLeg","RightFoot"}, angle=0, zoom=5},
-        {id="Back", n="Back", t={"Torso","UpperTorso","LowerTorso"}, angle=180, zoom=6}
+    -- หมวดหมู่ที่จะโชว์ในหน้าแรก (Home Page)
+    local ZONES = {
+        {id="Head", name="Head / Face"},
+        {id="Torso", name="Body / Torso"},
+        {id="Arms", name="Arms / Hands"},
+        {id="Legs", name="Legs / Feet"},
+        {id="Back", name="Back / Wings"}
     }
 
     local p = P.LocalPlayer
     local pg = p:WaitForChild("PlayerGui")
-    local camera = WS.CurrentCamera
     
     if pg:FindFirstChild("VFXHub") then pg.VFXHub:Destroy() end
 
-    local ti = TweenInfo.new(0.5, Enum.EasingStyle.Exponential, Enum.EasingDirection.Out)
+    local ti = TweenInfo.new(0.4, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
 
     -- [[ UI SETUP ]]
     local UI = Instance.new("ScreenGui", pg)
     UI.Name, UI.ResetOnSpawn = "VFXHub", false
-    UI.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 
     local Main = Instance.new("Frame", UI)
-    Main.AnchorPoint, Main.Position, Main.Size = Vector2.new(0.5,0.5), UDim2.new(0.5,0,0.5,0), UDim2.new(0,800,0,500)
-    Main.BackgroundColor3, Main.ClipsDescendants = Color3.fromRGB(20, 20, 20), true
-    Main.BackgroundTransparency = 0.2 -- ปรับโปร่งใสให้เห็นแมพ
-    Instance.new("UICorner", Main).CornerRadius = UDim.new(0, 8)
+    Main.AnchorPoint, Main.Position, Main.Size = Vector2.new(0.5,0.5), UDim2.new(0.5,0,0.5,0), UDim2.new(0,750,0,450)
+    Main.BackgroundColor3, Main.ClipsDescendants = Color3.fromRGB(20, 15, 30), true
+    Instance.new("UICorner", Main).CornerRadius = UDim.new(0, 10)
+    
+    local MainStroke = Instance.new("UIStroke", Main)
+    MainStroke.Color, MainStroke.Thickness, MainStroke.Transparency = C_BASE, 2, 0.3
 
     local MainScale = Instance.new("UIScale", Main)
     MainScale.Scale = 1
 
+    -- [[ TOP BAR (DRAGGABLE) ]]
     local Top = Instance.new("Frame", Main)
-    Top.Size, Top.BackgroundColor3, Top.ZIndex = UDim2.new(1,0,0,35), Color3.fromRGB(220, 220, 220), 10
-    Instance.new("UICorner", Top).CornerRadius = UDim.new(0, 8)
-
+    Top.Size, Top.BackgroundColor3, Top.ZIndex = UDim2.new(1,0,0,40), Color3.fromRGB(30, 20, 45), 10
+    Instance.new("UICorner", Top).CornerRadius = UDim.new(0, 10)
+    
     local TClip = Instance.new("Frame", Top)
     TClip.AnchorPoint, TClip.Position, TClip.Size = Vector2.new(0,1), UDim2.new(0,0,1,0), UDim2.new(1,0,0,10)
     TClip.BackgroundColor3, TClip.BorderSizePixel = Top.BackgroundColor3, 0
 
     local Lbl = Instance.new("TextLabel", Top)
-    Lbl.AnchorPoint, Lbl.Position, Lbl.Size = Vector2.new(0.5,0.5), UDim2.new(0.5,0,0.5,0), UDim2.new(0,100,1,-10)
-    Lbl.BackgroundTransparency, Lbl.Text, Lbl.TextColor3, Lbl.Font, Lbl.TextSize = 1, UI_TITLE, Color3.fromRGB(50,50,50), C_FONT, 16
+    Lbl.Size, Lbl.Position, Lbl.BackgroundTransparency = UDim2.new(1,0,1,0), UDim2.new(0,0,0,0), 1
+    Lbl.Text, Lbl.TextColor3, Lbl.Font, Lbl.TextSize = UI_TITLE, Color3.fromRGB(255,255,255), C_FONT, 18
 
-    -- [[ SETTINGS BUTTON & MAC BUTTONS ]]
-    local SettingsBtn = Instance.new("TextButton", Top)
-    SettingsBtn.AnchorPoint, SettingsBtn.Position, SettingsBtn.Size = Vector2.new(1,0.5), UDim2.new(1,-15,0.5,0), UDim2.new(0,25,0,25)
-    SettingsBtn.BackgroundTransparency, SettingsBtn.Text, SettingsBtn.TextColor3, SettingsBtn.TextSize = 1, "⚙", Color3.fromRGB(100,100,100), 20
-
+    -- ปิด UI
     local uiOpen = true
-    local MacP = Instance.new("Frame", Top)
-    MacP.BackgroundTransparency, MacP.Position, MacP.AnchorPoint, MacP.Size = 1, UDim2.new(0,15,0.5,0), Vector2.new(0,0.5), UDim2.new(0,60,1,0)
-    local MLo = Instance.new("UIListLayout", MacP)
-    MLo.FillDirection, MLo.VerticalAlignment, MLo.Padding = Enum.FillDirection.Horizontal, Enum.VerticalAlignment.Center, UDim.new(0,8)
-
-    local function mkMac(c)
-        local b = Instance.new("TextButton", MacP)
-        b.Size, b.BackgroundColor3, b.Text, b.AutoButtonColor = UDim2.new(0,14,0,14), c, "", false
-        Instance.new("UICorner", b).CornerRadius = UDim.new(1,0)
-        return b
-    end
-    local mClose = mkMac(Color3.fromRGB(255, 95, 86))
-    local mMin = mkMac(Color3.fromRGB(255, 189, 46)) 
-    local mMax = mkMac(Color3.fromRGB(39, 201, 63))  
-
-    local function clearPreview()
-        if p.Character and p.Character:FindFirstChild("PreviewEffects") then
-            p.Character.PreviewEffects:ClearAllChildren()
-        end
-    end
+    local CloseBtn = Instance.new("TextButton", Top)
+    CloseBtn.AnchorPoint, CloseBtn.Position, CloseBtn.Size = Vector2.new(1,0.5), UDim2.new(1,-10,0.5,0), UDim2.new(0,24,0,24)
+    CloseBtn.BackgroundColor3, CloseBtn.Text, CloseBtn.TextColor3, CloseBtn.Font = Color3.fromRGB(255, 80, 80), "X", Color3.fromRGB(255,255,255), Enum.Font.GothamBold
+    Instance.new("UICorner", CloseBtn).CornerRadius = UDim.new(1,0)
 
     local function toggleUI()
         uiOpen = not uiOpen
@@ -113,14 +88,9 @@ return function(Config)
             local tw = TS:Create(MainScale, ti, {Scale = 0})
             tw:Play()
             tw.Completed:Connect(function() if not uiOpen then Main.Visible = false end end)
-            
-            -- คืนค่ากล้องและลบพรีวิวตอนปิด UI
-            camera.CameraType = Enum.CameraType.Custom
-            clearPreview()
         end
     end
-
-    mClose.MouseButton1Click:Connect(toggleUI)
+    CloseBtn.MouseButton1Click:Connect(toggleUI)
 
     -- [[ DRAG SYSTEM ]]
     local dragToggle, dragInput, dragStart, startPos
@@ -140,73 +110,116 @@ return function(Config)
         end
     end)
 
+    UIS.InputBegan:Connect(function(inp, gpe)
+        if not gpe and inp.KeyCode == TOGGLE_KEY then toggleUI() end
+    end)
+
+    -- พื้นหลังลายตาราง
     local Cont = Instance.new("Frame", Main)
-    Cont.Position, Cont.Size, Cont.BackgroundColor3, Cont.ClipsDescendants = UDim2.new(0,0,0,35), UDim2.new(1,0,1,-35), Color3.fromRGB(30,15,45), true
-    Cont.BackgroundTransparency = 0.5 -- ทำให้กรอบเนื้อหาโปร่งแสง
+    Cont.Position, Cont.Size, Cont.BackgroundTransparency = UDim2.new(0,0,0,40), UDim2.new(1,0,1,-40), 1
     local Grid = Instance.new("ImageLabel", Cont)
-    Grid.Size, Grid.BackgroundTransparency, Grid.Image, Grid.ImageColor3, Grid.ImageTransparency = UDim2.new(1,0,1,0), 1, BG_IMAGE, Color3.fromRGB(200,100,255), 0.8
-    Grid.ScaleType, Grid.TileSize = Enum.ScaleType.Tile, UDim2.new(0,50,0,50)
+    Grid.Size, Grid.BackgroundTransparency, Grid.Image, Grid.ImageColor3, Grid.ImageTransparency = UDim2.new(1,0,1,0), 1, BG_IMAGE, C_BASE, 0.9
+    Grid.ScaleType, Grid.TileSize = Enum.ScaleType.Tile, UDim2.new(0,100,0,100)
 
-    -- [[ LEFT INVISIBLE BUTTON (ZOOM OUT) ]]
-    local HBox = Instance.new("TextButton", Cont)
-    HBox.AnchorPoint, HBox.Position, HBox.Size, HBox.BackgroundTransparency, HBox.Text, HBox.ZIndex = Vector2.new(0.5,0.5), UDim2.new(0.5,0,0.45,0), UDim2.new(0,350,0,350), 1, "", 5
-
-    -- [[ RIGHT PANEL (BOXES) ]]
-    local RPane = Instance.new("Frame", Cont)
-    RPane.AnchorPoint, RPane.Position, RPane.Size, RPane.ZIndex = Vector2.new(1,0.5), UDim2.new(1.5, 0, 0.45, 0), UDim2.new(0, 420, 0, 320), 5
-    RPane.BackgroundColor3, RPane.BackgroundTransparency = Color3.fromRGB(25, 15, 40), 0.2
-    Instance.new("UICorner", RPane).CornerRadius = UDim.new(0, 8)
-    local RStrk = Instance.new("UIStroke", RPane)
-    RStrk.Color, RStrk.Transparency, RStrk.Thickness = C_BASE, 0.5, 1.5
-
-    local RTit = Instance.new("TextLabel", RPane)
-    RTit.Size, RTit.Position, RTit.BackgroundTransparency = UDim2.new(1,-40,0,40), UDim2.new(0,20,0,15), 1
-    RTit.Text, RTit.TextColor3, RTit.Font, RTit.TextSize = INFO_TITLE, Color3.fromRGB(255,255,255), C_FONT, 22
-    RTit.TextXAlignment = Enum.TextXAlignment.Left
-
-    local BoxContainer = Instance.new("ScrollingFrame", RPane)
-    BoxContainer.Size, BoxContainer.Position, BoxContainer.BackgroundTransparency = UDim2.new(1, -20, 1, -70), UDim2.new(0, 10, 0, 60), 1
-    BoxContainer.ScrollBarThickness = 4
-    BoxContainer.ScrollBarImageColor3 = C_HL
-    BoxContainer.AutomaticCanvasSize = Enum.AutomaticSize.Y 
-    BoxContainer.CanvasSize = UDim2.new(0, 0, 0, 0)
-    BoxContainer.BorderSizePixel = 0
+    -- ==========================================
+    -- 🏠 PAGE 1: HOME PAGE (เลือกส่วนร่างกาย)
+    -- ==========================================
+    local HomePage = Instance.new("Frame", Cont)
+    HomePage.Size, HomePage.Position, HomePage.BackgroundTransparency = UDim2.new(1,0,1,0), UDim2.new(0,0,0,0), 1
     
-    local Padding = Instance.new("UIPadding", BoxContainer)
-    Padding.PaddingTop = UDim.new(0, 8)
-    Padding.PaddingBottom = UDim.new(0, 8)
-    Padding.PaddingLeft = UDim.new(0, 5)
-    Padding.PaddingRight = UDim.new(0, 5)
+    local HomeTitle = Instance.new("TextLabel", HomePage)
+    HomeTitle.Size, HomeTitle.Position, HomeTitle.BackgroundTransparency = UDim2.new(1,0,0,50), UDim2.new(0,0,0,20), 1
+    HomeTitle.Text, HomeTitle.TextColor3, HomeTitle.Font, HomeTitle.TextSize = "SELECT BODY PART", C_HL, C_FONT, 24
+    
+    local ZoneContainer = Instance.new("ScrollingFrame", HomePage)
+    ZoneContainer.Size, ZoneContainer.AnchorPoint, ZoneContainer.Position = UDim2.new(0,600,0,300), Vector2.new(0.5, 0), UDim2.new(0.5,0,0,80)
+    ZoneContainer.BackgroundTransparency, ZoneContainer.ScrollBarThickness = 1, 0
+    ZoneContainer.AutomaticCanvasSize = Enum.AutomaticSize.Y
 
-    local BoxGridLayout = Instance.new("UIGridLayout", BoxContainer)
-    BoxGridLayout.CellSize = UDim2.new(0, 80, 0, 90)
-    BoxGridLayout.CellPadding = UDim2.new(0, 15, 0, 15)
-    BoxGridLayout.FillDirectionMaxCells = 4 
-    BoxGridLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
-    BoxGridLayout.SortOrder = Enum.SortOrder.LayoutOrder
+    local ZoneLayout = Instance.new("UIGridLayout", ZoneContainer)
+    ZoneLayout.CellSize, ZoneLayout.CellPadding = UDim2.new(0, 180, 0, 80), UDim2.new(0, 20, 0, 20)
+    ZoneLayout.HorizontalAlignment, ZoneLayout.SortOrder = Enum.HorizontalAlignment.Center, Enum.SortOrder.LayoutOrder
 
-    local function RenderBoxes(boxDataList)
-        for _, v in ipairs(BoxContainer:GetChildren()) do
+    -- ==========================================
+    -- 📦 PAGE 2: SELECTION PAGE (เลือกเอฟเฟค + พรีวิวรูปภาพ)
+    -- ==========================================
+    local SelectionPage = Instance.new("Frame", Cont)
+    SelectionPage.Size, SelectionPage.Position, SelectionPage.BackgroundTransparency = UDim2.new(1,0,1,0), UDim2.new(1,0,0,0), 1 -- ซ่อนไว้ทางขวา
+    SelectionPage.Visible = false
+
+    -- 🔙 ปุ่มย้อนกลับ
+    local BackBtn = Instance.new("TextButton", SelectionPage)
+    BackBtn.Size, BackBtn.Position, BackBtn.BackgroundColor3 = UDim2.new(0,100,0,30), UDim2.new(0,15,0,15), Color3.fromRGB(50, 30, 70)
+    BackBtn.Text, BackBtn.TextColor3, BackBtn.Font, BackBtn.TextSize = "← BACK", Color3.fromRGB(255,255,255), C_FONT, 14
+    Instance.new("UICorner", BackBtn).CornerRadius = UDim.new(0,6)
+    local BackStrk = Instance.new("UIStroke", BackBtn)
+    BackStrk.Color, BackStrk.Thickness, BackStrk.Transparency = C_HL, 1, 0.5
+    
+    local CurrentZoneTitle = Instance.new("TextLabel", SelectionPage)
+    CurrentZoneTitle.Size, CurrentZoneTitle.Position, CurrentZoneTitle.BackgroundTransparency = UDim2.new(0,200,0,30), UDim2.new(0,130,0,15), 1
+    CurrentZoneTitle.Text, CurrentZoneTitle.TextColor3, CurrentZoneTitle.Font, CurrentZoneTitle.TextSize, CurrentZoneTitle.TextXAlignment = "Zone", C_HL, C_FONT, 20, Enum.TextXAlignment.Left
+
+    -- 🖼️ ฝั่งซ้าย: รูปภาพ Preview ขนาดใหญ่
+    local LeftPreview = Instance.new("Frame", SelectionPage)
+    LeftPreview.Size, LeftPreview.Position, LeftPreview.BackgroundColor3 = UDim2.new(0,300,0,300), UDim2.new(0,20,0,60), Color3.fromRGB(15,10,25)
+    Instance.new("UICorner", LeftPreview).CornerRadius = UDim.new(0,10)
+    Instance.new("UIStroke", LeftPreview).Color = C_BASE
+    
+    local PreviewImg = Instance.new("ImageLabel", LeftPreview)
+    PreviewImg.Size, PreviewImg.Position, PreviewImg.BackgroundTransparency = UDim2.new(1,-20,1,-20), UDim2.new(0,10,0,10), 1
+    PreviewImg.ScaleType = Enum.ScaleType.Fit
+    -- รูปเริ่มต้นเมื่อยังไม่ได้เลือกอะไร
+    PreviewImg.Image = "rbxassetid://15053423719" 
+    PreviewImg.ImageTransparency = 0.5
+
+    local PreviewText = Instance.new("TextLabel", LeftPreview)
+    PreviewText.Size, PreviewText.Position, PreviewText.BackgroundTransparency = UDim2.new(1,0,0,30), UDim2.new(0,0,1,-40), 1
+    PreviewText.Text, PreviewText.TextColor3, PreviewText.Font, PreviewText.TextSize = "Select VFX on the right", Color3.fromRGB(150,150,150), C_FONT, 14
+
+    -- 🗂️ ฝั่งขวา: รายการไอเทม
+    local RightPanel = Instance.new("ScrollingFrame", SelectionPage)
+    RightPanel.Size, RightPanel.Position, RightPanel.BackgroundTransparency = UDim2.new(0,380,0,300), UDim2.new(0,340,0,60), 1
+    RightPanel.ScrollBarThickness, RightPanel.ScrollBarImageColor3 = 4, C_HL
+    RightPanel.AutomaticCanvasSize = Enum.AutomaticSize.Y
+    
+    local RightLayout = Instance.new("UIGridLayout", RightPanel)
+    RightLayout.CellSize, RightLayout.CellPadding = UDim2.new(0, 80, 0, 80), UDim2.new(0, 10, 0, 10)
+    RightLayout.HorizontalAlignment, RightLayout.SortOrder = Enum.HorizontalAlignment.Center, Enum.SortOrder.LayoutOrder
+    Instance.new("UIPadding", RightPanel).PaddingTop = UDim.new(0,5)
+
+    -- [[ LOGIC: สร้างกล่องไอเทมฝั่งขวา ]]
+    local function RenderRightItems(zoneId)
+        -- ล้างของเก่าทิ้ง
+        for _, v in ipairs(RightPanel:GetChildren()) do
             if v:IsA("Frame") then v:Destroy() end
         end
-        boxDataList = boxDataList or {}
+        
+        -- คืนค่ารูปพรีวิวฝั่งซ้ายเป็นค่าเริ่มต้น
+        PreviewImg.Image = "rbxassetid://15053423719"
+        PreviewImg.ImageTransparency = 0.5
+        PreviewText.Text = "Select VFX on the right"
+
+        local boxDataList = TAB_BOXES[zoneId] or {}
         
         for _, data in ipairs(boxDataList) do
-            local slot = Instance.new("Frame", BoxContainer)
+            local slot = Instance.new("Frame", RightPanel)
             slot.BackgroundColor3, slot.BackgroundTransparency = Color3.fromRGB(35, 20, 50), 0.5
             Instance.new("UICorner", slot).CornerRadius = UDim.new(0, 6)
-            local slotStrk = Instance.new("UIStroke", slot)
-            slotStrk.Color, slotStrk.Transparency, slotStrk.Thickness = C_HL, 0.3, 2 
+            Instance.new("UIStroke", slot).Color = C_BASE
             
             if data.Image then
-                local img = Instance.new("ImageButton", slot)
-                img.Size, img.BackgroundTransparency, img.Position, img.AnchorPoint = UDim2.new(1, -10, 1, -10), 1, UDim2.new(0.5, 0, 0.5, 0), Vector2.new(0.5, 0.5)
-                img.Image = data.Image
+                local imgBtn = Instance.new("ImageButton", slot)
+                imgBtn.Size, imgBtn.BackgroundTransparency = UDim2.new(1,-10,1,-10), 1
+                imgBtn.Position, imgBtn.AnchorPoint = UDim2.new(0.5,0,0.5,0), Vector2.new(0.5,0.5)
+                imgBtn.Image = data.Image
                 
-                img.MouseButton1Click:Connect(function()
-                    clearPreview() -- ล้างพรีวิวเก่าออก
+                imgBtn.MouseButton1Click:Connect(function()
+                    -- 1. เปลี่ยนรูปภาพฝั่งซ้ายมือให้เป็นรูปที่กด
+                    PreviewImg.Image = data.Image
+                    PreviewImg.ImageTransparency = 0
+                    PreviewText.Text = "Preview"
 
-                    -- 1. ลอจิกการกดใส่ตัวจริง
+                    -- 2. รันสคริปต์/เอฟเฟค ลงตัวละคร
                     if data.Callback then 
                         if type(data.Callback) == "string" and data.Callback:match("^http") then
                             loadstring(game:HttpGet(data.Callback))()
@@ -214,207 +227,44 @@ return function(Config)
                             data.Callback() 
                         end
                     end
-                    
-                    -- 2. ลอจิกรัน Preview บนตัวละครจริง!
-                    local char = p.Character
-                    if char then
-                        local prevFolder = char:FindFirstChild("PreviewEffects")
-                        if not prevFolder then
-                            prevFolder = Instance.new("Folder", char)
-                            prevFolder.Name = "PreviewEffects"
-                        end
-                        
-                        if data.Preview then
-                            if type(data.Preview) == "string" and data.Preview:match("^http") then
-                                local success, result = pcall(function() return loadstring(game:HttpGet(data.Preview))() end)
-                                if success and type(result) == "function" then
-                                    result(char, prevFolder)
-                                end
-                            elseif type(data.Preview) == "function" then
-                                data.Preview(char, prevFolder)
-                            end
-                        end
-                    end
                 end)
             end
         end
     end
 
-    -- [[ SETTINGS PANEL ]]
-    local SetPnl = Instance.new("Frame", Main)
-    SetPnl.Size, SetPnl.Position, SetPnl.BackgroundColor3 = UDim2.new(1,0,1,-35), UDim2.new(0,0,0,35), Color3.fromRGB(15,10,25)
-    SetPnl.BackgroundTransparency, SetPnl.ZIndex, SetPnl.Visible, SetPnl.Active = 0.2, 100, false, true 
-    
-    local SetBox = Instance.new("Frame", SetPnl)
-    SetBox.Size, SetBox.AnchorPoint, SetBox.Position = UDim2.new(0,350,0,250), Vector2.new(0.5,0.5), UDim2.new(0.5,0,0.5,0)
-    SetBox.BackgroundColor3, SetBox.ZIndex, SetBox.Active = Color3.fromRGB(35,20,50), 101, true
-    Instance.new("UICorner", SetBox).CornerRadius = UDim.new(0,8)
-    local SetStrk = Instance.new("UIStroke", SetBox)
-    SetStrk.Color, SetStrk.Thickness = C_BASE, 2
-    
-    local SetTitle = Instance.new("TextLabel", SetBox)
-    SetTitle.Size, SetTitle.Position, SetTitle.BackgroundTransparency, SetTitle.Text = UDim2.new(1,0,0,50), UDim2.new(0,0,0,0), 1, "SETTINGS"
-    SetTitle.TextColor3, SetTitle.Font, SetTitle.TextSize, SetTitle.ZIndex = Color3.fromRGB(255,255,255), C_FONT, 20, 102
-    
-    local SetClose = Instance.new("TextButton", SetBox)
-    SetClose.Size, SetClose.AnchorPoint, SetClose.Position, SetClose.BackgroundColor3 = UDim2.new(0,100,0,35), Vector2.new(0.5,1), UDim2.new(0.5,0,1,-20), C_ON
-    SetClose.Text, SetClose.TextColor3, SetClose.Font, SetClose.ZIndex = "Close", Color3.fromRGB(255,255,255), C_FONT, 102
-    Instance.new("UICorner", SetClose).CornerRadius = UDim.new(0,6)
-    
-    -- Font Setting
-    local FontLbl = Instance.new("TextLabel", SetBox)
-    FontLbl.Size, FontLbl.Position, FontLbl.BackgroundTransparency, FontLbl.Text = UDim2.new(0,100,0,30), UDim2.new(0,30,0,70), 1, "UI Font:"
-    FontLbl.TextColor3, FontLbl.Font, FontLbl.TextSize, FontLbl.TextXAlignment, FontLbl.ZIndex = Color3.fromRGB(220,220,220), C_FONT, 16, Enum.TextXAlignment.Left, 102
-    
-    local FontBtn = Instance.new("TextButton", SetBox)
-    FontBtn.Size, FontBtn.Position, FontBtn.BackgroundColor3, FontBtn.Text = UDim2.new(0,150,0,30), UDim2.new(0,170,0,70), Color3.fromRGB(50,35,75), C_FONT.Name
-    FontBtn.TextColor3, FontBtn.Font, FontBtn.TextSize, FontBtn.ZIndex = C_HL, C_FONT, 14, 102
-    Instance.new("UICorner", FontBtn).CornerRadius = UDim.new(0,4)
-    
-    local FontList = {Enum.Font.GothamMedium, Enum.Font.Roboto, Enum.Font.Ubuntu, Enum.Font.SciFi, Enum.Font.Arcade, Enum.Font.Code}
-    local fIdx = 1
-    for i, f in ipairs(FontList) do if f == C_FONT then fIdx = i break end end
-
-    local function updateGlobalFont(newFont)
-        C_FONT = newFont
-        for _, obj in ipairs(Main:GetDescendants()) do
-            if obj:IsA("TextLabel") or obj:IsA("TextButton") or obj:IsA("TextBox") then obj.Font = newFont end
-        end
+    -- [[ LOGIC: เปลี่ยนหน้าไปมา ]]
+    local function GoToSelectionPage(zoneData)
+        CurrentZoneTitle.Text = zoneData.name
+        RenderRightItems(zoneData.id)
+        
+        SelectionPage.Visible = true
+        TS:Create(HomePage, ti, {Position = UDim2.new(-1,0,0,0)}):Play()
+        TS:Create(SelectionPage, ti, {Position = UDim2.new(0,0,0,0)}):Play()
     end
 
-    FontBtn.MouseButton1Click:Connect(function()
-        fIdx = fIdx + 1
-        if fIdx > #FontList then fIdx = 1 end
-        updateGlobalFont(FontList[fIdx])
-        FontBtn.Text = FontList[fIdx].Name
+    BackBtn.MouseButton1Click:Connect(function()
+        TS:Create(HomePage, ti, {Position = UDim2.new(0,0,0,0)}):Play()
+        local tw = TS:Create(SelectionPage, ti, {Position = UDim2.new(1,0,0,0)})
+        tw:Play()
+        tw.Completed:Connect(function() SelectionPage.Visible = false end)
     end)
 
-    -- Keybind Setting
-    local KeyLbl = Instance.new("TextLabel", SetBox)
-    KeyLbl.Size, KeyLbl.Position, KeyLbl.BackgroundTransparency, KeyLbl.Text = UDim2.new(0,100,0,30), UDim2.new(0,30,0,120), 1, "Toggle Key:"
-    KeyLbl.TextColor3, KeyLbl.Font, KeyLbl.TextSize, KeyLbl.TextXAlignment, KeyLbl.ZIndex = Color3.fromRGB(220,220,220), C_FONT, 16, Enum.TextXAlignment.Left, 102
-    
-    local KeyBtn = Instance.new("TextButton", SetBox)
-    KeyBtn.Size, KeyBtn.Position, KeyBtn.BackgroundColor3, KeyBtn.Text = UDim2.new(0,150,0,30), UDim2.new(0,170,0,120), Color3.fromRGB(50,35,75), TOGGLE_KEY.Name
-    KeyBtn.TextColor3, KeyBtn.Font, KeyBtn.TextSize, KeyBtn.ZIndex = C_HL, C_FONT, 14, 102
-    Instance.new("UICorner", KeyBtn).CornerRadius = UDim.new(0,4)
-
-    local isBinding = false
-    KeyBtn.MouseButton1Click:Connect(function()
-        isBinding = true
-        KeyBtn.Text = "... Press Any Key ..."
-    end)
-
-    UIS.InputBegan:Connect(function(inp, gpe)
-        if isBinding and inp.UserInputType == Enum.UserInputType.Keyboard then
-            TOGGLE_KEY = inp.KeyCode
-            KeyBtn.Text = TOGGLE_KEY.Name
-            isBinding = false
-        elseif not gpe and inp.KeyCode == TOGGLE_KEY and not isBinding then
-            toggleUI()
-        end
-    end)
-
-    SettingsBtn.MouseButton1Click:Connect(function() SetPnl.Visible = true end)
-    SetClose.MouseButton1Click:Connect(function() SetPnl.Visible = false end)
-
-    -- [[ HOVER INFO PANEL ]]
-    local Info = Instance.new("Frame", Cont)
-    Info.AnchorPoint, Info.Position, Info.Size, Info.BackgroundColor3, Info.BackgroundTransparency, Info.Visible = Vector2.new(1,0.5), UDim2.new(1,-20,0.45,0), UDim2.new(0,300,0,150), Color3.fromRGB(20,10,30), 1, false
-    Instance.new("UICorner", Info).CornerRadius = UDim.new(0,4)
-    local IStrk = Instance.new("UIStroke", Info)
-    IStrk.Color, IStrk.Transparency = C_BASE, 1
-    local ITit = Instance.new("TextLabel", Info)
-    ITit.Size, ITit.Position, ITit.BackgroundTransparency, ITit.Text, ITit.TextColor3, ITit.Font, ITit.TextSize, ITit.TextTransparency, ITit.TextXAlignment = UDim2.new(1,0,0,30), UDim2.new(0,10,0,5), 1, "CHAR: "..p.Name:upper(), Color3.fromRGB(230,230,255), C_FONT, 14, 1, Enum.TextXAlignment.Left
-    local IVFX = Instance.new("TextLabel", Info)
-    IVFX.Size, IVFX.Position, IVFX.BackgroundTransparency, IVFX.Text, IVFX.TextColor3, IVFX.Font, IVFX.TextSize, IVFX.TextTransparency, IVFX.TextXAlignment, IVFX.TextYAlignment = UDim2.new(1,-20,0,60), UDim2.new(0,10,0,35), 1, VFX_TEXT, C_BASE, C_FONT, 12, 1, Enum.TextXAlignment.Left, Enum.TextYAlignment.Top
-
-    -- [[ BOTTOM TABS LOGIC & CAMERA MANIPULATION ]]
-    local isPanelOpen = false
-    local SlotP = Instance.new("Frame", Cont)
-    SlotP.AnchorPoint, SlotP.Position, SlotP.Size, SlotP.BackgroundColor3, SlotP.BackgroundTransparency, SlotP.ZIndex = Vector2.new(0.5,1), UDim2.new(0.5,0,1,-20), UDim2.new(0,450,0,70), Color3.fromRGB(25,15,40), 0.4, 6
-    Instance.new("UICorner", SlotP).CornerRadius = UDim.new(0,6)
-    local SStrk = Instance.new("UIStroke", SlotP)
-    SStrk.Color, SStrk.Transparency = C_BASE, 0.6
-    local LLo = Instance.new("UIListLayout", SlotP)
-    LLo.FillDirection, LLo.Padding, LLo.HorizontalAlignment, LLo.VerticalAlignment = Enum.FillDirection.Horizontal, UDim.new(0,8), Enum.HorizontalAlignment.Center, Enum.VerticalAlignment.Center
-
-    for _, tabData in ipairs(FIXED_TABS) do
-        local btn = Instance.new("TextButton", SlotP)
-        btn.Size, btn.BackgroundColor3, btn.Text, btn.AutoButtonColor, btn.ZIndex = UDim2.new(0,50,0,50), C_ON, "", false, 7
-        Instance.new("UICorner", btn).CornerRadius = UDim.new(0,8)
-        local lbl = Instance.new("TextLabel", btn)
-        lbl.Size, lbl.BackgroundTransparency, lbl.Text, lbl.TextColor3, lbl.Font, lbl.TextSize, lbl.ZIndex = UDim2.new(1,0,1,0), 1, tabData.n, Color3.fromRGB(255,255,255), C_FONT, 10, 8
-
-        btn.MouseEnter:Connect(function() TS:Create(btn, TweenInfo.new(0.2), {BackgroundColor3 = C_HOV}):Play() end)
-        btn.MouseLeave:Connect(function() TS:Create(btn, TweenInfo.new(0.2), {BackgroundColor3 = C_ON}):Play() end)
+    -- สร้างปุ่มเลือกหมวดหมู่ในหน้าแรก (Home Page)
+    for _, z in ipairs(ZONES) do
+        local zBtn = Instance.new("TextButton", ZoneContainer)
+        zBtn.BackgroundColor3 = C_ON
+        zBtn.Text, zBtn.TextColor3, zBtn.Font, zBtn.TextSize = z.name, Color3.fromRGB(255,255,255), C_FONT, 18
+        Instance.new("UICorner", zBtn).CornerRadius = UDim.new(0,8)
+        local zStrk = Instance.new("UIStroke", zBtn)
+        zStrk.Color, zStrk.Thickness = C_BASE, 2
         
-        btn.MouseButton1Click:Connect(function()
-            isPanelOpen = true
-            RTit.Text = "Zone: " .. tabData.n
-            RenderBoxes(TAB_BOXES[tabData.id] or {})
-
-            -- เลื่อนเมนูและพื้นที่กดมาทางซ้าย
-            TS:Create(HBox, ti, {Position = UDim2.new(0.25, 0, 0.45, 0)}):Play()
-            TS:Create(RPane, ti, {Position = UDim2.new(0.97, 0, 0.45, 0)}):Play()
-            Info.Visible = false
-
-            -- 🎥 ระบบล็อกกล้องเข้าหาตัวจริง!
-            local char = p.Character
-            if not char or not char:FindFirstChild("HumanoidRootPart") then return end
-            
-            camera.CameraType = Enum.CameraType.Scriptable
-
-            local fp = char.HumanoidRootPart
-            for _, pName in ipairs(tabData.t) do
-                local found = char:FindFirstChild(pName)
-                if found then fp = found break end
-            end
-
-            -- คำนวณจุดตั้งกล้อง: ถอยมาด้านหน้า (-Z), เบี่ยงซ้าย (-X) และยกขึ้นนิดหน่อย (+Y)
-            local zD = tabData.zoom or 4
-            local camPos
-            if tabData.id == "Back" then
-                camPos = fp.CFrame * CFrame.new(-3, 1, zD + 2) -- ดูกลางหลัง
-            else
-                camPos = fp.CFrame * CFrame.new(-3, 1, -zD - 2) -- ดูด้านหน้าเบี่ยงซ้าย
-            end
-            
-            TS:Create(camera, ti, {CFrame = CFrame.lookAt(camPos.Position, fp.Position)}):Play()
+        zBtn.MouseEnter:Connect(function() TS:Create(zBtn, ti, {BackgroundColor3 = C_HOV}):Play() end)
+        zBtn.MouseLeave:Connect(function() TS:Create(zBtn, ti, {BackgroundColor3 = C_ON}):Play() end)
+        
+        zBtn.MouseButton1Click:Connect(function()
+            GoToSelectionPage(z)
         end)
     end
-
-    HBox.MouseEnter:Connect(function()
-        if not isPanelOpen then
-            Info.Visible = true 
-            TS:Create(Info, ti, {BackgroundTransparency=0.3}):Play()
-            TS:Create(IStrk, ti, {Transparency=0.5}):Play()
-            TS:Create(ITit, ti, {TextTransparency=0}):Play()
-            TS:Create(IVFX, ti, {TextTransparency=0}):Play()
-        end
-    end)
-
-    HBox.MouseLeave:Connect(function()
-        if not isPanelOpen then
-            TS:Create(Info, ti, {BackgroundTransparency=1}):Play()
-            TS:Create(IStrk, ti, {Transparency=1}):Play()
-            TS:Create(ITit, ti, {TextTransparency=1}):Play()
-            TS:Create(IVFX, ti, {TextTransparency=1}):Play()
-            task.delay(0.5, function() if Info.BackgroundTransparency==1 then Info.Visible=false end end)
-        end
-    end)
-
-    -- ปุ่ม Zoom Out (คืนค่ากล้องกลับมา)
-    HBox.MouseButton1Click:Connect(function()
-        isPanelOpen = false
-        TS:Create(HBox, ti, {Position = UDim2.new(0.5, 0, 0.45, 0)}):Play()
-        TS:Create(RPane, ti, {Position = UDim2.new(1.5, 0, 0.45, 0)}):Play()
-        
-        -- ปลดล็อกกล้องให้กลับเป็นปกติ
-        camera.CameraType = Enum.CameraType.Custom
-    end)
-
-    updateGlobalFont(C_FONT) 
 
     return { UI = UI, Toggle = toggleUI, Destroy = function() if UI then UI:Destroy() end end }
 end
