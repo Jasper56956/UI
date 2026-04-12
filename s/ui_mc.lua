@@ -5,7 +5,7 @@
     ██║     ██║   ██║██╔══██║    ██╔══██║██║     ██║     
     ███████╗╚██████╔╝██║  ██║    ██║  ██║███████╗███████╗
     ╚══════╝ ╚═════╝ ╚═╝  ╚═╝    ╚═╝  ╚═╝╚══════╝╚══════╝
-    Library V12: Removed Login System (Direct Access)
+    Library V13: Hidden Panels & Custom Background Settings
 ]=]
 
 local P = game:GetService("Players")
@@ -100,7 +100,7 @@ return function(Config)
     local mMax = mkMac(Color3.fromRGB(39, 201, 63))  
 
     -- ======================================================
-    -- 📦 CONTENT AREA (แสดงทันที)
+    -- 📦 CONTENT AREA 
     -- ======================================================
     local Cont = Instance.new("Frame", Main)
     Cont.Position, Cont.Size, Cont.BackgroundColor3, Cont.ClipsDescendants = UDim2.new(0,0,0,35), UDim2.new(1,0,1,-35), Color3.fromRGB(30,15,45), true
@@ -108,7 +108,8 @@ return function(Config)
     Cont.Visible = true
 
     local Grid = Instance.new("ImageLabel", Cont)
-    Grid.Size, Grid.BackgroundTransparency, Grid.Image, Grid.ImageColor3, Grid.ImageTransparency = UDim2.new(1,0,1,0), 1, BG_IMAGE, Color3.fromRGB(200,100,255), 0.8
+    Grid.Size, Grid.BackgroundTransparency, Grid.Image, Grid.ImageColor3 = UDim2.new(1,0,1,0), 1, BG_IMAGE, Color3.fromRGB(200,100,255)
+    Grid.ImageTransparency = 0.8 -- ความโปร่งใสของพื้นหลัง (0.8 = โปร่งแสง 80%)
     Grid.ScaleType, Grid.TileSize = Enum.ScaleType.Tile, UDim2.new(0,50,0,50)
 
     -- ======================================================
@@ -165,14 +166,16 @@ return function(Config)
     end)
 
     -- ======================================================
-    -- 📁 CONTENT DETAILS
+    -- 📁 CONTENT DETAILS (ซ่อนไว้ตอนแรก)
     -- ======================================================
     local HBox = Instance.new("TextButton", Cont)
     HBox.AnchorPoint, HBox.Position, HBox.Size, HBox.BackgroundTransparency, HBox.Text, HBox.ZIndex = Vector2.new(0.5,0.5), UDim2.new(0.5,0,0.45,0), UDim2.new(0,350,0,350), 1, "", 5
+    HBox.Visible = false -- ซ่อนพื้นที่คลิก
 
     local RPane = Instance.new("Frame", Cont)
     RPane.AnchorPoint, RPane.Position, RPane.Size, RPane.ZIndex = Vector2.new(1,0.5), UDim2.new(1.5, 0, 0.45, 0), UDim2.new(0, 420, 0, 320), 5
     RPane.BackgroundColor3, RPane.BackgroundTransparency = Color3.fromRGB(25, 15, 40), 0.2
+    RPane.Visible = false -- ซ่อน Panel หลัก
     Instance.new("UICorner", RPane).CornerRadius = UDim.new(0, 8)
     local RStrk = Instance.new("UIStroke", RPane)
     RStrk.Color, RStrk.Transparency, RStrk.Thickness = C_BASE, 0.5, 1.5
@@ -244,14 +247,14 @@ return function(Config)
     end
 
     -- ======================================================
-    -- ⚙️ SETTINGS PANEL
+    -- ⚙️ SETTINGS PANEL (เพิ่มตั้งค่า Background)
     -- ======================================================
     local SetPnl = Instance.new("Frame", Main)
     SetPnl.Size, SetPnl.Position, SetPnl.BackgroundColor3 = UDim2.new(1,0,1,-35), UDim2.new(0,0,0,35), Color3.fromRGB(15,10,25)
     SetPnl.BackgroundTransparency, SetPnl.ZIndex, SetPnl.Visible, SetPnl.Active = 0.2, 100, false, true 
     
     local SetBox = Instance.new("Frame", SetPnl)
-    SetBox.Size, SetBox.AnchorPoint, SetBox.Position = UDim2.new(0,350,0,250), Vector2.new(0.5,0.5), UDim2.new(0.5,0,0.5,0)
+    SetBox.Size, SetBox.AnchorPoint, SetBox.Position = UDim2.new(0,350,0,280), Vector2.new(0.5,0.5), UDim2.new(0.5,0,0.5,0)
     SetBox.BackgroundColor3, SetBox.ZIndex, SetBox.Active = Color3.fromRGB(35,20,50), 101, true
     Instance.new("UICorner", SetBox).CornerRadius = UDim.new(0,8)
     local SetStrk = Instance.new("UIStroke", SetBox)
@@ -266,6 +269,7 @@ return function(Config)
     SetClose.Text, SetClose.TextColor3, SetClose.Font, SetClose.ZIndex = "Close", Color3.fromRGB(255,255,255), C_FONT, 102
     Instance.new("UICorner", SetClose).CornerRadius = UDim.new(0,6)
     
+    -- Font Settings
     local FontBtn = Instance.new("TextButton", SetBox)
     FontBtn.Size, FontBtn.Position, FontBtn.BackgroundColor3 = UDim2.new(0,150,0,30), UDim2.new(0,170,0,70), Color3.fromRGB(50,35,75)
     FontBtn.Text, FontBtn.TextColor3, FontBtn.Font, FontBtn.TextSize, FontBtn.ZIndex = C_FONT.Name, C_HL, C_FONT, 14, 102
@@ -283,6 +287,7 @@ return function(Config)
         end
     end)
 
+    -- Toggle Key Settings
     local KeyBtn = Instance.new("TextButton", SetBox)
     KeyBtn.Size, KeyBtn.Position, KeyBtn.BackgroundColor3 = UDim2.new(0,150,0,30), UDim2.new(0,170,0,120), Color3.fromRGB(50,35,75)
     KeyBtn.Text, KeyBtn.TextColor3, KeyBtn.Font, KeyBtn.TextSize, KeyBtn.ZIndex = TOGGLE_KEY.Name, C_HL, C_FONT, 14, 102
@@ -296,6 +301,30 @@ return function(Config)
             TOGGLE_KEY, KeyBtn.Text, isBinding = inp.KeyCode, inp.KeyCode.Name, false
         elseif not gpe and inp.KeyCode == TOGGLE_KEY and not isBinding then
             toggleUI()
+        end
+    end)
+
+    -- ✨ ระบบปรับเปลี่ยนพื้นหลัง
+    local BgLbl = Instance.new("TextLabel", SetBox)
+    BgLbl.Size, BgLbl.Position, BgLbl.BackgroundTransparency = UDim2.new(0,100,0,30), UDim2.new(0,30,0,170), 1
+    BgLbl.Text, BgLbl.TextColor3, BgLbl.Font, BgLbl.TextSize = "Background:", Color3.fromRGB(220,220,220), C_FONT, 16
+    BgLbl.TextXAlignment = Enum.TextXAlignment.Left
+
+    local BgBox = Instance.new("TextBox", SetBox)
+    BgBox.Size, BgBox.Position, BgBox.BackgroundColor3 = UDim2.new(0,150,0,30), UDim2.new(0,170,0,170), Color3.fromRGB(50,35,75)
+    BgBox.Text, BgBox.TextColor3, BgBox.Font, BgBox.TextSize = "", C_HL, C_FONT, 14
+    BgBox.PlaceholderText = "Paste Image ID..."
+    Instance.new("UICorner", BgBox).CornerRadius = UDim.new(0,4)
+
+    BgBox.FocusLost:Connect(function()
+        local id = BgBox.Text
+        if id ~= "" then
+            -- ถ้าใส่มาเป็นตัวเลขเฉยๆ จะเติม rbxassetid:// ให้ แต่ถ้าใส่เต็มมาแล้วก็จะใช้ได้เลย
+            if tonumber(id) then
+                Grid.Image = "rbxassetid://" .. id
+            else
+                Grid.Image = id
+            end
         end
     end)
 
@@ -328,6 +357,10 @@ return function(Config)
         lbl.TextColor3, lbl.Font, lbl.TextSize, lbl.ZIndex = Color3.fromRGB(255,255,255), C_FONT, 11, 8
 
         btn.MouseButton1Click:Connect(function()
+            -- แสดง Panel ขึ้นมาเมื่อกดเมนูด้านล่าง
+            HBox.Visible = true
+            RPane.Visible = true
+
             RTit.Text = "Zone: " .. tabData.n
             RenderBoxes(TAB_BOXES[tabData.id] or {})
             TS:Create(HBox, ti, {Position = UDim2.new(0.25, 0, 0.45, 0)}):Play()
@@ -347,11 +380,9 @@ return function(Config)
                     hb.Adornee = part
                     hb.Color3 = C_HL
                     hb.SurfaceColor3 = C_HL
-
-                    -- 👇 ปรับความเข้มและความหนาตรงนี้ได้เลยครับ 👇
-                    hb.LineThickness = 0.02        -- ความหนาของเส้นขอบ (ค่ายิ่งเยอะ เส้นยิ่งหนา แนะนำประมาณ 0.03 ถึง 0.1)
-                    hb.Transparency = 1            -- ความโปร่งใสของเส้นขอบ (0 = เข้มชัดสุด 100%, 1 = จางหายไปเลย)
-                    hb.SurfaceTransparency = 0.7   -- ความโปร่งใสของสีทึบที่คลุมผิวชิ้นส่วน (0.7 คือใสๆ ถ้าปรับ 0.3 จะเห็นผิวเรืองแสงทึบๆ ชัดมาก)
+                    hb.LineThickness = 0.05
+                    hb.Transparency = 0
+                    hb.SurfaceTransparency = 0.7
                 end
             end
             local zD = tabData.zoom or 4
@@ -361,8 +392,16 @@ return function(Config)
     end
 
     HBox.MouseButton1Click:Connect(function()
+        local tw = TS:Create(RPane, ti, {Position = UDim2.new(1.5, 0, 0.45, 0)})
+        tw:Play()
         TS:Create(HBox, ti, {Position = UDim2.new(0.5, 0, 0.45, 0)}):Play()
-        TS:Create(RPane, ti, {Position = UDim2.new(1.5, 0, 0.45, 0)}):Play()
+        
+        tw.Completed:Connect(function()
+            -- ซ่อน Panel เมื่อปิดหน้าจอเรียบร้อย
+            HBox.Visible = false
+            RPane.Visible = false
+        end)
+
         camera.CameraType = Enum.CameraType.Custom
         clearHighlights()
     end)
