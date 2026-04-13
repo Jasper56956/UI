@@ -279,9 +279,9 @@ return function(Config)
     local LLo = Instance.new("UIListLayout", SlotP)
     LLo.FillDirection, LLo.Padding, LLo.HorizontalAlignment, LLo.VerticalAlignment = Enum.FillDirection.Horizontal, UDim.new(0, 6), Enum.HorizontalAlignment.Center, Enum.VerticalAlignment.Center
 
+    local currentFocusedTab = nil
     for _, tabData in ipairs(FIXED_TABS) do
         local btn = Instance.new("TextButton", SlotP)
-        -- ปรับขนาดปุ่มให้เล็กลงเพื่อให้พอดีกับพื้นที่ 420px
         btn.Size, btn.BackgroundColor3 = UDim2.new(0, 52, 0, 36), Color3.fromRGB(80, 15, 25) 
         btn.Text, btn.AutoButtonColor = "", false
         Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 6)
@@ -293,33 +293,48 @@ return function(Config)
         lbl.TextColor3, lbl.Font, lbl.TextSize = Color3.fromRGB(255,255,255), C_FONT, 18
         lbl.TextWrapped = true
         
-
+        -- 👇 2. ปรับแก้ระบบคลิก (MouseButton1Click) เพื่อรองรับการกดซ้ำ
         btn.MouseButton1Click:Connect(function()
-            RTit.Text = "Zone: " .. tabData.n
-            RenderBoxes(TAB_BOXES[tabData.id] or {})
-
             local char = p.Character
             if not char or not char:FindFirstChild("HumanoidRootPart") then return end
-            camera.CameraType = Enum.CameraType.Scriptable
-            clearHighlights()
-            local fp = char.HumanoidRootPart
-            for _, pName in ipairs(tabData.t) do
-                local part = char:FindFirstChild(pName)
-                if part and part:IsA("BasePart") then
-                    fp = part
-                    local hb = Instance.new("SelectionBox", part)
-                    hb.Name = "VFXHub_Highlight"
-                    hb.Adornee = part
-                    hb.Color3 = C_HL
-                    hb.SurfaceColor3 = C_HL
-                    hb.LineThickness = 0.05
-                    hb.Transparency = 0
-                    hb.SurfaceTransparency = 0.7
+
+            -- 🛑 ตรวจสอบว่ากดซ้ำปุ่มที่กำลังโฟกัสอยู่หรือไม่
+            if currentFocusedTab == tabData.id then
+                -- [กรณีกดซ้ำ] -> ยกเลิกโฟกัส
+                currentFocusedTab = nil
+                clearHighlights()
+                camera.CameraType = Enum.CameraType.Custom -- คืนค่ามุมกล้องกลับให้ผู้เล่นควบคุมเอง
+                
+                -- (ออปชั่นเสริม) ถ้าอยากให้พอกดยกเลิกแล้ว กรอบไอเท็มทางขวาหายไปด้วย ให้ลบ -- สองบรรทัดล่างออกครับ
+                -- RTit.Text = INFO_TITLE .. " Select a Body Part"
+                -- RenderBoxes({}) 
+            else
+                -- [กรณีกดครั้งแรก หรือเปลี่ยนโซน] -> โฟกัสตามปกติ
+                currentFocusedTab = tabData.id
+                RTit.Text = "Zone: " .. tabData.n
+                RenderBoxes(TAB_BOXES[tabData.id] or {})
+
+                camera.CameraType = Enum.CameraType.Scriptable
+                clearHighlights()
+                local fp = char.HumanoidRootPart
+                for _, pName in ipairs(tabData.t) do
+                    local part = char:FindFirstChild(pName)
+                    if part and part:IsA("BasePart") then
+                        fp = part
+                        local hb = Instance.new("SelectionBox", part)
+                        hb.Name = "VFXHub_Highlight"
+                        hb.Adornee = part
+                        hb.Color3 = C_HL
+                        hb.SurfaceColor3 = C_HL
+                        hb.LineThickness = 0.05
+                        hb.Transparency = 0
+                        hb.SurfaceTransparency = 0.7
+                    end
                 end
+                local zD = tabData.zoom or 4
+                local camPos = (tabData.id == "Back") and (fp.CFrame * CFrame.new(-3, 1, zD + 2)) or (fp.CFrame * CFrame.new(-3, 1, -zD - 2))
+                TS:Create(camera, ti, {CFrame = CFrame.lookAt(camPos.Position, fp.Position)}):Play()
             end
-            local zD = tabData.zoom or 4
-            local camPos = (tabData.id == "Back") and (fp.CFrame * CFrame.new(-3, 1, zD + 2)) or (fp.CFrame * CFrame.new(-3, 1, -zD - 2))
-            TS:Create(camera, ti, {CFrame = CFrame.lookAt(camPos.Position, fp.Position)}):Play()
         end)
     end
 
