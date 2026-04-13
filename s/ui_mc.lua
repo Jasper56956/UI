@@ -5,7 +5,7 @@
     ██║     ██║   ██║██╔══██║    ██╔══██║██║     ██║     
     ███████╗╚██████╔╝██║  ██║    ██║  ██║███████╗███████╗
     ╚══════╝ ╚═════╝ ╚═╝  ╚═╝    ╚═╝  ╚═╝╚══════╝╚══════╝
-    Library V22: Static Zone Tab, Buttons Below Tab, Matching Mockup Layout
+    Library V23: Start Screen First, Persistent Zone Tab, Toggle Focus
 ]=]
 
 local P = game:GetService("Players")
@@ -29,6 +29,14 @@ return function(Config)
     local TOGGLE_KEY = Config.ToggleKey or Enum.KeyCode.RightControl
     local C_FONT = Config.Font or Enum.Font.GothamMedium
     local INFO_TITLE = Config.InfoTitle or "Zone:"
+    
+    -- 🌟 Center Text Typewriter Config
+    local CENTER_TEXT_DATA = Config.CenterText or {"ยินดีต้อนรับสู่ระบบ!", "คลิกที่ปุ่มด้านล่างเพื่อเริ่มต้นใช้งาน"}
+    if type(CENTER_TEXT_DATA) == "string" then CENTER_TEXT_DATA = {CENTER_TEXT_DATA} end
+    local CENTER_TEXT_SIZE = Config.CenterTextSize or 32
+    local CENTER_TEXT_FONT = Config.CenterTextFont or Enum.Font.FredokaOne
+    local TYPE_SPEED = Config.TypingSpeed or 0.05
+    local PAUSE_TIME = Config.PauseTime or 2.5
     
     local TAB_BOXES = Config.TabBoxes or {}
     
@@ -112,6 +120,72 @@ return function(Config)
     Cont.Visible = true
 
     -- ======================================================
+    -- 🚀 START SCREEN (Typewriter + Button)
+    -- ======================================================
+    local StartGroup = Instance.new("CanvasGroup", Cont)
+    StartGroup.Size, StartGroup.Position = UDim2.new(1, 0, 1, 0), UDim2.new(0, 0, 0, 0)
+    StartGroup.BackgroundTransparency, StartGroup.ZIndex = 1, 15
+
+    local CenterTextLbl = Instance.new("TextLabel", StartGroup)
+    CenterTextLbl.AnchorPoint, CenterTextLbl.Position = Vector2.new(0.5, 0.5), UDim2.new(0.5, 0, 0.40, 0)
+    CenterTextLbl.Size, CenterTextLbl.BackgroundTransparency = UDim2.new(0.8, 0, 0.2, 0), 1
+    CenterTextLbl.Text, CenterTextLbl.TextColor3 = "", Color3.fromRGB(255, 255, 255)
+    CenterTextLbl.Font, CenterTextLbl.TextSize = CENTER_TEXT_FONT, CENTER_TEXT_SIZE
+    local CenterTextStrk = Instance.new("UIStroke", CenterTextLbl)
+    CenterTextStrk.Color, CenterTextStrk.Thickness, CenterTextStrk.Transparency = Color3.fromRGB(0, 0, 0), 2, 0.5
+
+    local StartBtn = Instance.new("TextButton", StartGroup)
+    StartBtn.Size, StartBtn.AnchorPoint = UDim2.new(0, 180, 0, 45), Vector2.new(0.5, 0.5)
+    StartBtn.Position = UDim2.new(0.5, 0, 0.60, 0)
+    StartBtn.BackgroundColor3 = Color3.fromRGB(200, 50, 60)
+    StartBtn.Text, StartBtn.TextColor3, StartBtn.Font, StartBtn.TextSize = "เริ่มต้น (START)", Color3.fromRGB(255, 255, 255), Enum.Font.GothamBold, 18
+    Instance.new("UICorner", StartBtn).CornerRadius = UDim.new(0, 8)
+    local StartBtnStrk = Instance.new("UIStroke", StartBtn)
+    StartBtnStrk.Color, StartBtnStrk.Thickness = Color3.fromRGB(255, 100, 100), 1.5
+
+    StartBtn.MouseEnter:Connect(function() TS:Create(StartBtn, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(230, 70, 80)}):Play() end)
+    StartBtn.MouseLeave:Connect(function() TS:Create(StartBtn, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(200, 50, 60)}):Play() end)
+
+    local isStarted = false
+    local function getGraphemes(str)
+        local graphemes = {}
+        for first, last in utf8.graphemes(str) do table.insert(graphemes, string.sub(str, first, last)) end
+        return graphemes
+    end
+
+    if #CENTER_TEXT_DATA > 0 then
+        task.spawn(function()
+            while not isStarted do
+                for _, str in ipairs(CENTER_TEXT_DATA) do
+                    if isStarted then break end
+                    local graphemes = getGraphemes(str)
+                    local currentText = ""
+                    for i = 1, #graphemes do
+                        if isStarted then break end
+                        currentText = currentText .. graphemes[i]
+                        CenterTextLbl.Text = currentText
+                        task.wait(TYPE_SPEED)
+                    end
+                    if isStarted then break end
+                    task.wait(PAUSE_TIME)
+                    if #CENTER_TEXT_DATA > 1 then
+                        for i = #graphemes, 1, -1 do
+                            if isStarted then break end
+                            currentText = ""
+                            for j = 1, i - 1 do currentText = currentText .. graphemes[j] end
+                            CenterTextLbl.Text = currentText
+                            task.wait(TYPE_SPEED / 2)
+                        end
+                        if isStarted then break end
+                        task.wait(0.5)
+                    end
+                end
+                if #CENTER_TEXT_DATA == 1 then break end
+            end
+        end)
+    end
+
+    -- ======================================================
     -- ⚙️ CORE SYSTEMS
     -- ======================================================
     local function clearHighlights()
@@ -163,7 +237,7 @@ return function(Config)
     end)
 
     -- ======================================================
-    -- 🖼️ BIG PREVIEW (LEFT SIDE)
+    -- 🖼️ LEFT PANEL (กรอบฝั่งซ้าย)
     -- ======================================================
     local LeftPanel = Instance.new("Frame", Cont)
     LeftPanel.Position, LeftPanel.Size = UDim2.new(0, 20, 0, 20), UDim2.new(0, 320, 0, 425)
@@ -171,16 +245,10 @@ return function(Config)
     Instance.new("UICorner", LeftPanel).CornerRadius = UDim.new(0, 8)
     local LStrk = Instance.new("UIStroke", LeftPanel)
     LStrk.Color, LStrk.Transparency, LStrk.Thickness = C_BASE, 0.5, 1.5
-
-    local BigPreview = Instance.new("ImageLabel", LeftPanel)
-    BigPreview.Size = UDim2.new(1, -20, 1, -20)
-    BigPreview.AnchorPoint, BigPreview.Position = Vector2.new(0.5, 0.5), UDim2.new(0.5, 0, 0.5, 0)
-    BigPreview.BackgroundTransparency = 1
-    BigPreview.ImageTransparency = 1 
-    BigPreview.ScaleType = Enum.ScaleType.Fit
+    LeftPanel.Visible = false -- ซ่อนตอนแรก
 
     -- ======================================================
-    -- 📁 ZONE TAB (RIGHT SIDE - ALWAYS VISIBLE)
+    -- 📁 ZONE TAB (RIGHT SIDE - ALWAYS VISIBLE AFTER START)
     -- ======================================================
     local RPane = Instance.new("Frame", Cont)
     RPane.AnchorPoint, RPane.Position, RPane.Size = Vector2.new(1, 0), UDim2.new(1, -20, 0, 20), UDim2.new(0, 420, 0, 350)
@@ -188,6 +256,7 @@ return function(Config)
     Instance.new("UICorner", RPane).CornerRadius = UDim.new(0, 8)
     local RStrk = Instance.new("UIStroke", RPane)
     RStrk.Color, RStrk.Transparency, RStrk.Thickness = C_BASE, 0.5, 1.5
+    RPane.Visible = false -- ซ่อนตอนแรก
 
     local RTit = Instance.new("TextLabel", RPane)
     RTit.Size, RTit.Position, RTit.BackgroundTransparency = UDim2.new(1,-40,0,40), UDim2.new(0,20,0,10), 1
@@ -228,15 +297,6 @@ return function(Config)
                 local img = Instance.new("ImageButton", slot)
                 img.Size, img.BackgroundTransparency, img.Position, img.AnchorPoint = UDim2.new(1, -10, 1, -10), 1, UDim2.new(0.5, 0, 0.5, 0), Vector2.new(0.5, 0.5)
                 img.Image = data.Image
-                
-                img.MouseEnter:Connect(function()
-                    BigPreview.Image = data.Image
-                    TS:Create(BigPreview, TweenInfo.new(0.2), {ImageTransparency = 0}):Play()
-                end)
-                
-                img.MouseLeave:Connect(function()
-                    TS:Create(BigPreview, TweenInfo.new(0.2), {ImageTransparency = 1}):Play()
-                end)
 
                 img.MouseButton1Click:Connect(function()
                     clearPreview()
@@ -269,17 +329,36 @@ return function(Config)
     -- 🌟 BOTTOM TABS UX (UNDER ZONE)
     -- ======================================================
     local SlotP = Instance.new("Frame", Cont)
-    -- วางตำแหน่งให้อยู่ล่าง RPane พอดี
     SlotP.AnchorPoint, SlotP.Position = Vector2.new(1, 0), UDim2.new(1, -20, 0, 385)
     SlotP.Size, SlotP.BackgroundColor3 = UDim2.new(0, 420, 0, 60), Color3.fromRGB(15, 5, 20)
     SlotP.BackgroundTransparency = 0.4
     Instance.new("UICorner", SlotP).CornerRadius = UDim.new(0, 8)
     Instance.new("UIStroke", SlotP).Color = Color3.fromRGB(180, 80, 255)
+    SlotP.Visible = false -- ซ่อนตอนแรก
     
     local LLo = Instance.new("UIListLayout", SlotP)
     LLo.FillDirection, LLo.Padding, LLo.HorizontalAlignment, LLo.VerticalAlignment = Enum.FillDirection.Horizontal, UDim.new(0, 6), Enum.HorizontalAlignment.Center, Enum.VerticalAlignment.Center
 
+    -- ฟังก์ชันปุ่ม Start
+    StartBtn.MouseButton1Click:Connect(function()
+        if isStarted then return end
+        isStarted = true
+
+        local fadeOut = TS:Create(StartGroup, TweenInfo.new(0.4), {GroupTransparency = 1})
+        fadeOut:Play()
+
+        -- โชว์หน้าต่างหลักขึ้นมา
+        LeftPanel.Visible = true
+        RPane.Visible = true
+        SlotP.Visible = true
+
+        fadeOut.Completed:Connect(function()
+            StartGroup.Visible = false
+        end)
+    end)
+
     local currentFocusedTab = nil
+
     for _, tabData in ipairs(FIXED_TABS) do
         local btn = Instance.new("TextButton", SlotP)
         btn.Size, btn.BackgroundColor3 = UDim2.new(0, 52, 0, 36), Color3.fromRGB(80, 15, 25) 
@@ -290,26 +369,19 @@ return function(Config)
 
         local lbl = Instance.new("TextLabel", btn)
         lbl.Size, lbl.BackgroundTransparency, lbl.Text = UDim2.new(1,0,1,0), 1, tabData.n
-        lbl.TextColor3, lbl.Font, lbl.TextSize = Color3.fromRGB(255,255,255), C_FONT, 18
+        lbl.TextColor3, lbl.Font, lbl.TextSize = Color3.fromRGB(255,255,255), C_FONT, 10
         lbl.TextWrapped = true
-        
-        -- 👇 2. ปรับแก้ระบบคลิก (MouseButton1Click) เพื่อรองรับการกดซ้ำ
+
         btn.MouseButton1Click:Connect(function()
             local char = p.Character
             if not char or not char:FindFirstChild("HumanoidRootPart") then return end
 
-            -- 🛑 ตรวจสอบว่ากดซ้ำปุ่มที่กำลังโฟกัสอยู่หรือไม่
+            -- 🛑 เช็คว่ากดปุ่มเดิมซ้ำหรือไม่ (ระบบ Toggle)
             if currentFocusedTab == tabData.id then
-                -- [กรณีกดซ้ำ] -> ยกเลิกโฟกัส
                 currentFocusedTab = nil
                 clearHighlights()
-                camera.CameraType = Enum.CameraType.Custom -- คืนค่ามุมกล้องกลับให้ผู้เล่นควบคุมเอง
-                
-                -- (ออปชั่นเสริม) ถ้าอยากให้พอกดยกเลิกแล้ว กรอบไอเท็มทางขวาหายไปด้วย ให้ลบ -- สองบรรทัดล่างออกครับ
-                -- RTit.Text = INFO_TITLE .. " Select a Body Part"
-                -- RenderBoxes({}) 
+                camera.CameraType = Enum.CameraType.Custom -- เลิกโฟกัส คืนกล้องให้ผู้เล่น
             else
-                -- [กรณีกดครั้งแรก หรือเปลี่ยนโซน] -> โฟกัสตามปกติ
                 currentFocusedTab = tabData.id
                 RTit.Text = "Zone: " .. tabData.n
                 RenderBoxes(TAB_BOXES[tabData.id] or {})
