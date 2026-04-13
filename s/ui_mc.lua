@@ -5,7 +5,7 @@
     ██║     ██║   ██║██╔══██║    ██╔══██║██║     ██║     
     ███████╗╚██████╔╝██║  ██║    ██║  ██║███████╗███████╗
     ╚══════╝ ╚═════╝ ╚═╝  ╚═╝    ╚═╝  ╚═╝╚══════╝╚══════╝
-    Library V15: Removed Back Button
+    Library V8: Live Focus & Animated Center Text (Customizable Size)
 ]=]
 
 local P = game:GetService("Players")
@@ -28,6 +28,11 @@ return function(Config)
     local C_FONT = Config.Font or Enum.Font.GothamMedium
     local INFO_TITLE = Config.InfoTitle or "SYSTEM INFO"
     
+    -- 🟢 ตั้งค่าข้อความแอนิเมชันตรงกลาง
+    local CENTER_TEXT = Config.CenterText or "✨ Welcome to Shadow VFX Hub ✨"
+    local SHOW_CENTER_TEXT = Config.ShowCenterText == nil and true or Config.ShowCenterText
+    local CENTER_TEXT_SIZE = Config.CenterTextSize or 28 -- ปรับขนาดฟอนต์ได้ที่นี่ หรือจาก Main
+
     local TAB_BOXES = Config.TabBoxes or {}
     
     local FIXED_TABS = {
@@ -247,6 +252,68 @@ return function(Config)
     end
 
     -- ======================================================
+    -- 🌟 CENTER ANIMATED TEXT (พิมพ์ดีดตรงกลาง)
+    -- ======================================================
+    local CenterAnimText = Instance.new("TextLabel", Cont)
+    CenterAnimText.Name = "CenterText"
+    CenterAnimText.AnchorPoint = Vector2.new(0.5, 0.5)
+    CenterAnimText.Position = UDim2.new(0.5, 0, 0.2, 0)
+    CenterAnimText.Size = UDim2.new(0.8, 0, 0, 40)
+    CenterAnimText.BackgroundTransparency = 1
+    CenterAnimText.Font = C_FONT
+    CenterAnimText.Text = "" 
+    CenterAnimText.TextColor3 = C_HL
+    CenterAnimText.TextSize = CENTER_TEXT_SIZE
+    CenterAnimText.Visible = SHOW_CENTER_TEXT
+    CenterAnimText.ZIndex = 4
+    
+    local CStrk = Instance.new("UIStroke", CenterAnimText)
+    CStrk.Thickness = 2
+    CStrk.Color = Color3.fromRGB(0, 0, 0)
+    CStrk.Transparency = 0.3
+
+    if SHOW_CENTER_TEXT and CENTER_TEXT ~= "" then
+        task.spawn(function()
+            local basePos = UDim2.new(0.5, 0, 0.2, 0)
+            local tickCount = 0
+            
+            -- อนิเมชันลอยขึ้นลง
+            RS.RenderStepped:Connect(function()
+                if CenterAnimText.Parent then
+                    tickCount = tickCount + 0.05
+                    CenterAnimText.Position = basePos + UDim2.new(0, 0, 0, math.sin(tickCount) * 5)
+                end
+            end)
+            
+            -- อนิเมชันพิมพ์ดีด
+            while task.wait() do
+                if not CenterAnimText.Parent then break end
+                local length = utf8.len(CENTER_TEXT) or #CENTER_TEXT
+                
+                -- พิมพ์เข้า
+                for i = 1, length do
+                    if not CenterAnimText.Parent then break end
+                    local offset = utf8.offset(CENTER_TEXT, i)
+                    if offset then CenterAnimText.Text = string.sub(CENTER_TEXT, 1, offset) end
+                    task.wait(0.05)
+                end
+                
+                task.wait(3) 
+                
+                -- ลบออก
+                for i = length, 1, -1 do
+                    if not CenterAnimText.Parent then break end
+                    local offset = utf8.offset(CENTER_TEXT, i)
+                    if offset then CenterAnimText.Text = string.sub(CENTER_TEXT, 1, offset) end
+                    task.wait(0.02)
+                end
+                
+                task.wait(0.5)
+            end
+        end)
+    end
+
+    -- ======================================================
     -- ⚙️ SETTINGS PANEL 
     -- ======================================================
     local SetPnl = Instance.new("Frame", Main)
@@ -358,6 +425,10 @@ return function(Config)
             TS:Create(HBox, ti, {Position = UDim2.new(0.25, 0, 0.45, 0)}):Play()
             TS:Create(RPane, ti, {Position = UDim2.new(0.97, 0, 0.45, 0)}):Play()
 
+            -- ซ่อน Text ตรงกลางเมื่อเปิดกล่องเมนู
+            TS:Create(CenterAnimText, TweenInfo.new(0.3), {TextTransparency = 1}):Play()
+            TS:Create(CStrk, TweenInfo.new(0.3), {Transparency = 1}):Play()
+
             local char = p.Character
             if not char or not char:FindFirstChild("HumanoidRootPart") then return end
             camera.CameraType = Enum.CameraType.Scriptable
@@ -391,6 +462,10 @@ return function(Config)
         tw:Play()
         TS:Create(HBox, ti, {Position = UDim2.new(0.5, 0, 0.45, 0)}):Play()
         
+        -- โชว์ Text ตรงกลางอีกครั้งตอนปิดแผงด้านข้าง
+        TS:Create(CenterAnimText, TweenInfo.new(0.3), {TextTransparency = 0}):Play()
+        TS:Create(CStrk, TweenInfo.new(0.3), {Transparency = 0.3}):Play()
+
         tw.Completed:Connect(function()
             HBox.Visible = false
             RPane.Visible = false
