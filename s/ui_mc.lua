@@ -291,7 +291,7 @@ return function(Config)
         local lbl = Instance.new("TextLabel", btn)
         lbl.Size, lbl.BackgroundTransparency, lbl.Text = UDim2.new(1,0,1,0), 1, tabData.n
         lbl.TextColor3, lbl.Font, lbl.TextSize = Color3.fromRGB(255,255,255), C_FONT, 17
-        lbl.TextWrapped = true
+        lbl.TextWrapped = false
 
         btn.MouseButton1Click:Connect(function()
             RTit.Text = "Zone: " .. tabData.n
