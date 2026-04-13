@@ -350,7 +350,7 @@ return function(Config)
     local SetClose = Instance.new("TextButton", SetBox)
     SetClose.Size, SetClose.AnchorPoint, SetClose.Position, SetClose.BackgroundColor3 = UDim2.new(0, 120, 0, 35), Vector2.new(0.5, 1), UDim2.new(0.5, 0, 1, -15), C_ON
     SetClose.Text, SetClose.TextColor3, SetClose.Font, SetClose.ZIndex = "Close", Color3.fromRGB(255, 255, 255), C_FONT, 102
-    Instance.new("UICorner", SetClose).CornerRadius = UDim.new(0, 10)
+    Instance.new("UICorner", SetClose).CornerRadius = UDim.new(0, 6)
 
     -- Container for Setting Items
     local SetItems = Instance.new("Frame", SetBox)
