@@ -292,7 +292,6 @@ return function(Config)
         lbl.Size, lbl.BackgroundTransparency, lbl.Text = UDim2.new(1,0,1,0), 1, tabData.n
         lbl.TextColor3, lbl.Font, lbl.TextSize = Color3.fromRGB(255,255,255), C_FONT, 18
         lbl.TextWrapped = true
-        lbl.TextXAlignment = Enum.TextXAlignment.Center
         
 
         btn.MouseButton1Click:Connect(function()
