@@ -5,7 +5,7 @@
     ██║     ██║   ██║██╔══██║    ██╔══██║██║     ██║     
     ███████╗╚██████╔╝██║  ██║    ██║  ██║███████╗███████╗
     ╚══════╝ ╚═════╝ ╚═╝  ╚═╝    ╚═╝  ╚═╝╚══════╝╚══════╝
-    Library V20: Added Background Color Setting
+    Library V20: Added Background Color Setting back to Settings Tab
 ]=]
 
 local P = game:GetService("Players")
@@ -112,7 +112,7 @@ return function(Config)
     local mMax = mkMac(Color3.fromRGB(39, 201, 63))  
 
     -- ======================================================
-    -- 📦 CONTENT AREA 
+    -- 📦 CONTENT AREA (Solid Background)
     -- ======================================================
     local Cont = Instance.new("Frame", Main)
     Cont.Position, Cont.Size = UDim2.new(0,0,0,35), UDim2.new(1,0,1,-35)
@@ -151,6 +151,7 @@ return function(Config)
                 for _, str in ipairs(CENTER_TEXT_DATA) do
                     local graphemes = getGraphemes(str)
                     local currentText = ""
+                    -- พิมพ์เข้า
                     for i = 1, #graphemes do
                         currentText = currentText .. graphemes[i]
                         CenterTextLbl.Text = currentText
@@ -158,6 +159,7 @@ return function(Config)
                     end
                     task.wait(PAUSE_TIME)
                     
+                    -- ลบออก
                     if #CENTER_TEXT_DATA > 1 then
                         for i = #graphemes, 1, -1 do
                             currentText = ""
@@ -308,19 +310,33 @@ return function(Config)
                             data.Callback() 
                         end
                     end
+                    local char = p.Character
+                    if char then
+                        local prevFolder = char:FindFirstChild("PreviewEffects") or Instance.new("Folder", char)
+                        prevFolder.Name = "PreviewEffects"
+                        if data.Preview then
+                            if type(data.Preview) == "string" and data.Preview:match("^http") then
+                                local success, result = pcall(function() return loadstring(game:HttpGet(data.Preview))() end)
+                                if success and type(result) == "function" then result(char, prevFolder) end
+                            elseif type(data.Preview) == "function" then
+                                data.Preview(char, prevFolder)
+                            end
+                        end
+                    end
                 end)
             end
         end
     end
 
     -- ======================================================
-    -- ⚙️ SETTINGS PANEL 
+    -- ⚙️ SETTINGS PANEL (REBUILT FOR CLEAN UI)
     -- ======================================================
     local SetPnl = Instance.new("Frame", Main)
     SetPnl.Size, SetPnl.Position, SetPnl.BackgroundColor3 = UDim2.new(1,0,1,-35), UDim2.new(0,0,0,35), Color3.fromRGB(15,10,25)
     SetPnl.BackgroundTransparency, SetPnl.ZIndex, SetPnl.Visible, SetPnl.Active = 0.2, 100, false, true 
     
     local SetBox = Instance.new("Frame", SetPnl)
+    -- ปรับขนาดกล่อง SetBox ให้สูงขึ้นเล็กน้อยเพื่อรองรับแถวเพิ่ม
     SetBox.Size, SetBox.AnchorPoint, SetBox.Position = UDim2.new(0, 320, 0, 260), Vector2.new(0.5, 0.5), UDim2.new(0.5, 0, 0.5, 0)
     SetBox.BackgroundColor3, SetBox.ZIndex, SetBox.Active = Color3.fromRGB(35, 20, 50), 101, true
     Instance.new("UICorner", SetBox).CornerRadius = UDim.new(0, 8)
@@ -396,27 +412,27 @@ return function(Config)
         end
     end)
 
-    -- 🌟 3. [NEW] Background Color Setting
-    local BgColorBox = Instance.new("TextBox")
-    BgColorBox.BackgroundColor3 = Color3.fromRGB(50, 35, 75)
-    BgColorBox.Text = ""
-    BgColorBox.PlaceholderText = "e.g. 30, 15, 45"
-    BgColorBox.TextColor3 = C_HL
-    BgColorBox.Font = C_FONT
-    BgColorBox.TextSize = 14
-    Instance.new("UICorner", BgColorBox).CornerRadius = UDim.new(0, 4)
-    createSettingRow("BG Color (RGB)", BgColorBox)
+    -- 🌟 3. [NEW] BG Color Setting
+    local BgBox = Instance.new("TextBox")
+    BgBox.BackgroundColor3 = Color3.fromRGB(50, 35, 75)
+    BgBox.Text = ""
+    BgBox.PlaceholderText = "e.g. 30, 15, 45"
+    BgBox.TextColor3 = C_HL
+    BgBox.Font = C_FONT
+    BgBox.TextSize = 14
+    Instance.new("UICorner", BgBox).CornerRadius = UDim.new(0, 4)
+    createSettingRow("UI Color (RGB)", BgBox)
 
-    BgColorBox.FocusLost:Connect(function()
-        local text = BgColorBox.Text
+    BgBox.FocusLost:Connect(function()
+        local text = BgBox.Text
         if text ~= "" then
-            -- จับคู่ตัวเลข 3 ชุดที่คั่นด้วยลูกน้ำ
+            -- เช็คแพทเทิร์น "ตัวเลข, ตัวเลข, ตัวเลข"
             local r, g, b = text:match("(%d+)%s*,%s*(%d+)%s*,%s*(%d+)")
             if r and g and b then
                 Cont.BackgroundColor3 = Color3.fromRGB(tonumber(r), tonumber(g), tonumber(b))
             else
-                BgColorBox.Text = ""
-                BgColorBox.PlaceholderText = "Invalid! e.g. 0,0,0"
+                BgBox.Text = ""
+                BgBox.PlaceholderText = "Invalid Format!"
             end
         end
     end)
@@ -450,6 +466,7 @@ return function(Config)
         lbl.TextColor3, lbl.Font, lbl.TextSize, lbl.ZIndex = Color3.fromRGB(255,255,255), C_FONT, 11, 8
 
         btn.MouseButton1Click:Connect(function()
+            -- ซ่อน Center Text
             TS:Create(CenterTextLbl, ti, {TextTransparency = 1}):Play()
             TS:Create(CenterTextStrk, ti, {Transparency = 1}):Play()
             
@@ -494,6 +511,7 @@ return function(Config)
         tw:Play()
         TS:Create(HBox, ti, {Position = UDim2.new(0.5, 0, 0.45, 0)}):Play()
         
+        -- เฟดให้ Center Text กลับมา
         TS:Create(CenterTextLbl, ti, {TextTransparency = 0}):Play()
         TS:Create(CenterTextStrk, ti, {Transparency = 0.5}):Play()
         
