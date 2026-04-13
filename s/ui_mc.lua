@@ -275,15 +275,6 @@ return function(Config)
     if SHOW_CENTER_TEXT and CENTER_TEXT ~= "" then
         task.spawn(function()
             local basePos = UDim2.new(0.5, 0, 0.2, 0)
-            local tickCount = 0
-            
-            -- อนิเมชันลอยขึ้นลง
-            RS.RenderStepped:Connect(function()
-                if CenterAnimText.Parent then
-                    tickCount = tickCount + 0.05
-                    CenterAnimText.Position = basePos + UDim2.new(0, 0, 0, math.sin(tickCount) * 5)
-                end
-            end)
             
             -- อนิเมชันพิมพ์ดีด
             while task.wait() do
