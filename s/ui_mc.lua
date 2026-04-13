@@ -418,7 +418,7 @@ return function(Config)
             HBox.Visible = true
             RPane.Visible = true
 
-            RTit.Text = "Zone: " .. tabData.n
+            RTit.Text = "Zone : " .. tabData.n
             RenderBoxes(TAB_BOXES[tabData.id] or {})
             TS:Create(HBox, ti, {Position = UDim2.new(0.25, 0, 0.45, 0)}):Play()
             TS:Create(RPane, ti, {Position = UDim2.new(0.97, 0, 0.45, 0)}):Play()
