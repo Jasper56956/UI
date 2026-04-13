@@ -5,7 +5,7 @@
     ██║     ██║   ██║██╔══██║    ██╔══██║██║     ██║     
     ███████╗╚██████╔╝██║  ██║    ██║  ██║███████╗███████╗
     ╚══════╝ ╚═════╝ ╚═╝  ╚═╝    ╚═╝  ╚═╝╚══════╝╚══════╝
-    Library V17: Added Start Menu & Hidden Bottom Tabs
+    Library V22: Added Typewriter Animation to Start Menu
 ]=]
 
 local P = game:GetService("Players")
@@ -22,11 +22,22 @@ return function(Config)
     local C_BASE = Config.BaseColor or Color3.fromRGB(160, 80, 255)     
     local C_HL = Config.HighlightColor or Color3.fromRGB(100, 255, 255) 
     local C_ON = Config.ButtonColor or Color3.fromRGB(100, 70, 150)
-    local BG_IMAGE = Config.BackgroundImage or "rbxassetid://277037193"
+    
+    local C_BG = Config.BackgroundColor or Color3.fromRGB(30, 15, 45)
+    local BG_TRANS = Config.BackgroundTransparency or 0.2
     
     local TOGGLE_KEY = Config.ToggleKey or Enum.KeyCode.RightControl
     local C_FONT = Config.Font or Enum.Font.GothamMedium
-    local INFO_TITLE = Config.InfoTitle or "SYSTEM INFO"
+    
+    -- 🌟 Center Text Typewriter Config
+    local CENTER_TEXT_DATA = Config.CenterText or {"ยินดีต้อนรับสู่ระบบ!", "เลือกส่วนที่ต้องการเพื่อเริ่มต้น"}
+    if type(CENTER_TEXT_DATA) == "string" then CENTER_TEXT_DATA = {CENTER_TEXT_DATA} end
+    local CENTER_TEXT_SIZE = Config.CenterTextSize or 32
+    local CENTER_TEXT_FONT = Config.CenterTextFont or Enum.Font.FredokaOne
+    local TYPE_SPEED = Config.TypingSpeed or 0.05
+    local PAUSE_TIME = Config.PauseTime or 2.5
+    local SHOW_CENTER_TEXT = Config.ShowCenterText
+    if SHOW_CENTER_TEXT == nil then SHOW_CENTER_TEXT = true end
     
     local TAB_BOXES = Config.TabBoxes or {}
     
@@ -63,7 +74,6 @@ return function(Config)
     Main.BackgroundColor3, Main.ClipsDescendants = Color3.fromRGB(20, 20, 20), true
     Main.BackgroundTransparency = 0.2
     Instance.new("UICorner", Main).CornerRadius = UDim.new(0, 8)
-
     local MainScale = Instance.new("UIScale", Main)
     MainScale.Scale = 1
 
@@ -97,20 +107,91 @@ return function(Config)
     end
     local mClose = mkMac(Color3.fromRGB(255, 95, 86))
     local mMin = mkMac(Color3.fromRGB(255, 189, 46)) 
-    local mMax = mkMac(Color3.fromRGB(39, 201, 63))  
 
     -- ======================================================
     -- 📦 CONTENT AREA 
     -- ======================================================
     local Cont = Instance.new("Frame", Main)
-    Cont.Position, Cont.Size, Cont.BackgroundColor3, Cont.ClipsDescendants = UDim2.new(0,0,0,35), UDim2.new(1,0,1,-35), Color3.fromRGB(30,15,45), true
-    Cont.BackgroundTransparency = 0.5
-    Cont.Visible = true
+    Cont.Position, Cont.Size = UDim2.new(0,0,0,35), UDim2.new(1,0,1,-35)
+    Cont.BackgroundColor3 = C_BG
+    Cont.BackgroundTransparency = BG_TRANS
+    Cont.ClipsDescendants = true
 
-    local Grid = Instance.new("ImageLabel", Cont)
-    Grid.Size, Grid.BackgroundTransparency, Grid.Image, Grid.ImageColor3 = UDim2.new(1,0,1,0), 1, BG_IMAGE, Color3.fromRGB(200,100,255)
-    Grid.ImageTransparency = 0.8
-    Grid.ScaleType, Grid.TileSize = Enum.ScaleType.Tile, UDim2.new(0,50,0,50)
+    -- ======================================================
+    -- 🌟 1. ZONE SELECTION MENU (Main Menu)
+    -- ======================================================
+    local ZoneGroup = Instance.new("CanvasGroup", Cont)
+    ZoneGroup.Size = UDim2.new(1, 0, 1, 0)
+    ZoneGroup.Position = UDim2.new(0, 0, 0, 0)
+    ZoneGroup.BackgroundTransparency = 1
+    ZoneGroup.Visible = false -- ซ่อนหน้า Zone ไว้ก่อน จนกว่าจะกด Start
+    
+    local CenterTextLbl = Instance.new("TextLabel", ZoneGroup)
+    CenterTextLbl.AnchorPoint, CenterTextLbl.Position = Vector2.new(0.5, 0.5), UDim2.new(0.5, 0, 0.25, 0)
+    CenterTextLbl.Size, CenterTextLbl.BackgroundTransparency = UDim2.new(0.8, 0, 0.2, 0), 1
+    CenterTextLbl.Text, CenterTextLbl.TextColor3, CenterTextLbl.Font, CenterTextLbl.TextSize = "👇 กรุณาเลือกโซนที่ต้องการจัดการ 👇", Color3.fromRGB(255, 255, 255), CENTER_TEXT_FONT, CENTER_TEXT_SIZE - 4
+    local CenterTextStrk = Instance.new("UIStroke", CenterTextLbl)
+    CenterTextStrk.Color, CenterTextStrk.Thickness, CenterTextStrk.Transparency = Color3.fromRGB(0, 0, 0), 2, 0.5
+
+    local ZoneGridBox = Instance.new("Frame", ZoneGroup)
+    ZoneGridBox.AnchorPoint, ZoneGridBox.Position, ZoneGridBox.Size = Vector2.new(0.5, 0.5), UDim2.new(0.5, 0, 0.65, 0), UDim2.new(0, 600, 0, 200)
+    ZoneGridBox.BackgroundTransparency = 1
+
+    local ZGrid = Instance.new("UIGridLayout", ZoneGridBox)
+    ZGrid.CellSize, ZGrid.CellPadding = UDim2.new(0, 130, 0, 45), UDim2.new(0, 15, 0, 15)
+    ZGrid.HorizontalAlignment, ZGrid.VerticalAlignment = Enum.HorizontalAlignment.Center, Enum.VerticalAlignment.Center
+    ZGrid.SortOrder = Enum.SortOrder.LayoutOrder
+
+    -- ======================================================
+    -- 🌟 2. LEFT PANE (Big Preview Box)
+    -- ======================================================
+    local LeftPane = Instance.new("Frame", Cont)
+    LeftPane.Size = UDim2.new(0, 320, 0, 400)
+    LeftPane.AnchorPoint = Vector2.new(0, 0.5)
+    LeftPane.Position = UDim2.new(-0.5, 0, 0.5, 0) -- Hidden Off-screen Left
+    LeftPane.BackgroundColor3, LeftPane.BackgroundTransparency = Color3.fromRGB(20, 10, 30), 0.2
+    Instance.new("UICorner", LeftPane).CornerRadius = UDim.new(0, 8)
+    local LStrk = Instance.new("UIStroke", LeftPane)
+    LStrk.Color, LStrk.Thickness = C_BASE, 2
+
+    local BigPreview = Instance.new("ImageLabel", LeftPane)
+    BigPreview.Size, BigPreview.Position, BigPreview.AnchorPoint = UDim2.new(1, -20, 1, -20), UDim2.new(0.5, 0, 0.5, 0), Vector2.new(0.5, 0.5)
+    BigPreview.BackgroundTransparency, BigPreview.ImageTransparency, BigPreview.ScaleType = 1, 1, Enum.ScaleType.Fit
+
+    -- ======================================================
+    -- 🌟 3. RIGHT PANE (Options Grid)
+    -- ======================================================
+    local RightPane = Instance.new("Frame", Cont)
+    RightPane.Size = UDim2.new(0, 410, 0, 400)
+    RightPane.AnchorPoint = Vector2.new(1, 0.5)
+    RightPane.Position = UDim2.new(1.5, 0, 0.5, 0) -- Hidden Off-screen Right
+    RightPane.BackgroundColor3, RightPane.BackgroundTransparency = Color3.fromRGB(25, 15, 40), 0.2
+    Instance.new("UICorner", RightPane).CornerRadius = UDim.new(0, 8)
+    local RStrk = Instance.new("UIStroke", RightPane)
+    RStrk.Color, RStrk.Thickness = C_HL, 2
+
+    local TopRBar = Instance.new("Frame", RightPane)
+    TopRBar.Size, TopRBar.BackgroundTransparency = UDim2.new(1, 0, 0, 50), 1
+    
+    local RTit = Instance.new("TextLabel", TopRBar)
+    RTit.Size, RTit.Position, RTit.BackgroundTransparency = UDim2.new(0.7, 0, 1, 0), UDim2.new(0, 20, 0, 0), 1
+    RTit.Text, RTit.TextColor3, RTit.Font, RTit.TextSize, RTit.TextXAlignment = "Zone: ", Color3.fromRGB(255,255,255), C_FONT, 22, Enum.TextXAlignment.Left
+
+    local BackBtn = Instance.new("TextButton", TopRBar)
+    BackBtn.Size, BackBtn.AnchorPoint, BackBtn.Position = UDim2.new(0, 80, 0, 30), Vector2.new(1, 0.5), UDim2.new(1, -15, 0.5, 0)
+    BackBtn.BackgroundColor3, BackBtn.Text, BackBtn.TextColor3, BackBtn.Font = Color3.fromRGB(200, 50, 60), "◀ Back", Color3.fromRGB(255, 255, 255), C_FONT
+    Instance.new("UICorner", BackBtn).CornerRadius = UDim.new(0, 6)
+
+    local BoxContainer = Instance.new("ScrollingFrame", RightPane)
+    BoxContainer.Size, BoxContainer.Position, BoxContainer.BackgroundTransparency = UDim2.new(1, -20, 1, -60), UDim2.new(0, 10, 0, 50), 1
+    BoxContainer.ScrollBarThickness, BoxContainer.ScrollBarImageColor3, BoxContainer.BorderSizePixel = 4, C_HL, 0
+    BoxContainer.AutomaticCanvasSize, BoxContainer.CanvasSize = Enum.AutomaticSize.Y, UDim2.new(0, 0, 0, 0)
+    local Padding = Instance.new("UIPadding", BoxContainer)
+    Padding.PaddingTop, Padding.PaddingBottom, Padding.PaddingLeft, Padding.PaddingRight = UDim.new(0, 8), UDim.new(0, 8), UDim.new(0, 5), UDim.new(0, 5)
+
+    local BoxGridLayout = Instance.new("UIGridLayout", BoxContainer)
+    BoxGridLayout.CellSize, BoxGridLayout.CellPadding = UDim2.new(0, 85, 0, 95), UDim2.new(0, 12, 0, 15)
+    BoxGridLayout.HorizontalAlignment, BoxGridLayout.SortOrder = Enum.HorizontalAlignment.Center, Enum.SortOrder.LayoutOrder
 
     -- ======================================================
     -- ⚙️ CORE SYSTEMS
@@ -138,7 +219,6 @@ return function(Config)
             local tw = TS:Create(MainScale, ti, {Scale = 0})
             tw:Play()
             tw.Completed:Connect(function() if not uiOpen then Main.Visible = false end end)
-            
             camera.CameraType = Enum.CameraType.Custom
             clearPreview()
             clearHighlights()
@@ -147,7 +227,7 @@ return function(Config)
 
     mClose.MouseButton1Click:Connect(toggleUI)
 
-    -- Drag System
+    -- Window Dragging
     local dragToggle, dragInput, dragStart, startPos
     Top.InputBegan:Connect(function(inp)
         if inp.UserInputType == Enum.UserInputType.MouseButton1 or inp.UserInputType == Enum.UserInputType.Touch then
@@ -166,53 +246,8 @@ return function(Config)
     end)
 
     -- ======================================================
-    -- 📁 CONTENT DETAILS & HOVER PREVIEW
+    -- 📁 RENDER EFFECTS & INTERACTIONS
     -- ======================================================
-    local HBox = Instance.new("TextButton", Cont)
-    HBox.AnchorPoint, HBox.Position, HBox.Size, HBox.BackgroundTransparency, HBox.Text, HBox.ZIndex = Vector2.new(0.5,0.5), UDim2.new(0.5,0,0.45,0), UDim2.new(0,350,0,350), 1, "", 5
-    HBox.Visible = false 
-
-    local RPane = Instance.new("Frame", Cont)
-    RPane.AnchorPoint, RPane.Position, RPane.Size, RPane.ZIndex = Vector2.new(1,0.5), UDim2.new(1.5, 0, 0.45, 0), UDim2.new(0, 420, 0, 320), 5
-    RPane.BackgroundColor3, RPane.BackgroundTransparency = Color3.fromRGB(25, 15, 40), 0.2
-    RPane.Visible = false 
-    Instance.new("UICorner", RPane).CornerRadius = UDim.new(0, 8)
-    local RStrk = Instance.new("UIStroke", RPane)
-    RStrk.Color, RStrk.Transparency, RStrk.Thickness = C_BASE, 0.5, 1.5
-
-    -- 🌟 [NEW] รูปพรีวิวฝั่งซ้าย (ซ่อนไว้ก่อน จะแสดงตอนเอาเมาส์ชี้กล่อง)
-    local BigPreview = Instance.new("ImageLabel", Cont)
-    BigPreview.Size = UDim2.new(0, 260, 0, 260)
-    BigPreview.AnchorPoint = Vector2.new(0.5, 0.5)
-    BigPreview.Position = UDim2.new(0.25, 0, 0.45, 0) -- วางไว้ครึ่งซ้ายของหน้าจอ
-    BigPreview.BackgroundTransparency = 1
-    BigPreview.ImageTransparency = 1 -- ซ่อนรูปภาพเริ่มต้น
-    BigPreview.ScaleType = Enum.ScaleType.Fit
-    BigPreview.ZIndex = 4
-
-    local RTit = Instance.new("TextLabel", RPane)
-    RTit.Size, RTit.Position, RTit.BackgroundTransparency = UDim2.new(1,-40,0,40), UDim2.new(0,20,0,15), 1
-    RTit.Text, RTit.TextColor3, RTit.Font, RTit.TextSize = INFO_TITLE, Color3.fromRGB(255,255,255), C_FONT, 22
-    RTit.TextXAlignment = Enum.TextXAlignment.Left
-
-    local BoxContainer = Instance.new("ScrollingFrame", RPane)
-    BoxContainer.Size, BoxContainer.Position, BoxContainer.BackgroundTransparency = UDim2.new(1, -20, 1, -70), UDim2.new(0, 10, 0, 60), 1
-    BoxContainer.ScrollBarThickness = 4
-    BoxContainer.ScrollBarImageColor3 = C_HL
-    BoxContainer.AutomaticCanvasSize = Enum.AutomaticSize.Y 
-    BoxContainer.CanvasSize = UDim2.new(0, 0, 0, 0)
-    BoxContainer.BorderSizePixel = 0
-    
-    local Padding = Instance.new("UIPadding", BoxContainer)
-    Padding.PaddingTop, Padding.PaddingBottom, Padding.PaddingLeft, Padding.PaddingRight = UDim.new(0, 8), UDim.new(0, 8), UDim.new(0, 5), UDim.new(0, 5)
-
-    local BoxGridLayout = Instance.new("UIGridLayout", BoxContainer)
-    BoxGridLayout.CellSize = UDim2.new(0, 80, 0, 90)
-    BoxGridLayout.CellPadding = UDim2.new(0, 15, 0, 15)
-    BoxGridLayout.FillDirectionMaxCells = 4 
-    BoxGridLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
-    BoxGridLayout.SortOrder = Enum.SortOrder.LayoutOrder
-
     local function RenderBoxes(boxDataList)
         for _, v in ipairs(BoxContainer:GetChildren()) do
             if v:IsA("Frame") then v:Destroy() end
@@ -230,7 +265,6 @@ return function(Config)
                 img.Size, img.BackgroundTransparency, img.Position, img.AnchorPoint = UDim2.new(1, -10, 1, -10), 1, UDim2.new(0.5, 0, 0.5, 0), Vector2.new(0.5, 0.5)
                 img.Image = data.Image
                 
-                -- ระบบ Hover แสดงผล BigPreview ทางด้านซ้าย
                 img.MouseEnter:Connect(function()
                     BigPreview.Image = data.Image
                     TS:Create(BigPreview, TweenInfo.new(0.2), {ImageTransparency = 0}):Play()
@@ -245,9 +279,7 @@ return function(Config)
                     if data.Callback then 
                         if type(data.Callback) == "string" and data.Callback:match("^http") then
                             loadstring(game:HttpGet(data.Callback))()
-                        elseif type(data.Callback) == "function" then
-                            data.Callback() 
-                        end
+                        elseif type(data.Callback) == "function" then data.Callback() end
                     end
                     local char = p.Character
                     if char then
@@ -268,36 +300,123 @@ return function(Config)
     end
 
     -- ======================================================
-    -- ⚙️ SETTINGS PANEL 
+    -- 🎮 ZONE BUTTON LOGIC (Open / Back)
+    -- ======================================================
+    local function openZone(tabData)
+        RTit.Text = "Zone: " .. tabData.n
+        RenderBoxes(TAB_BOXES[tabData.id] or {})
+        
+        -- Animation Flow
+        TS:Create(ZoneGroup, ti, {GroupTransparency = 1, Position = UDim2.new(0, 0, 0.1, 0)}):Play()
+        TS:Create(LeftPane, ti, {Position = UDim2.new(0.04, 0, 0.5, 0)}):Play()
+        TS:Create(RightPane, ti, {Position = UDim2.new(0.96, 0, 0.5, 0)}):Play()
+
+        -- Camera Logic
+        local char = p.Character
+        if not char or not char:FindFirstChild("HumanoidRootPart") then return end
+        camera.CameraType = Enum.CameraType.Scriptable
+        clearHighlights()
+        local fp = char.HumanoidRootPart
+        for _, pName in ipairs(tabData.t) do
+            local part = char:FindFirstChild(pName)
+            if part and part:IsA("BasePart") then
+                fp = part
+                local hb = Instance.new("SelectionBox", part)
+                hb.Name = "VFXHub_Highlight"
+                hb.Adornee, hb.Color3, hb.SurfaceColor3, hb.LineThickness, hb.Transparency, hb.SurfaceTransparency = part, C_HL, C_HL, 0.05, 0, 0.7
+            end
+        end
+        local zD = tabData.zoom or 4
+        local camPos = (tabData.id == "Back") and (fp.CFrame * CFrame.new(-3, 1, zD + 2)) or (fp.CFrame * CFrame.new(-3, 1, -zD - 2))
+        TS:Create(camera, ti, {CFrame = CFrame.lookAt(camPos.Position, fp.Position)}):Play()
+    end
+
+    local function closeZone()
+        -- Animation Flow back to Menu
+        TS:Create(LeftPane, ti, {Position = UDim2.new(-0.5, 0, 0.5, 0)}):Play()
+        TS:Create(RightPane, ti, {Position = UDim2.new(1.5, 0, 0.5, 0)}):Play()
+        TS:Create(ZoneGroup, ti, {GroupTransparency = 0, Position = UDim2.new(0, 0, 0, 0)}):Play()
+        
+        TS:Create(BigPreview, TweenInfo.new(0.2), {ImageTransparency = 1}):Play()
+        
+        camera.CameraType = Enum.CameraType.Custom
+        clearHighlights()
+        clearPreview()
+    end
+
+    BackBtn.MouseButton1Click:Connect(closeZone)
+
+    -- Create Buttons in Zone Grid
+    for _, tabData in ipairs(FIXED_TABS) do
+        local btn = Instance.new("TextButton", ZoneGridBox)
+        btn.BackgroundColor3, btn.Text, btn.AutoButtonColor = Color3.fromRGB(60, 25, 85), "", false
+        Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 8)
+        local BStrk = Instance.new("UIStroke", btn)
+        BStrk.Color, BStrk.Thickness = C_BASE, 1.5
+
+        local lbl = Instance.new("TextLabel", btn)
+        lbl.Size, lbl.BackgroundTransparency, lbl.Text = UDim2.new(1,0,1,0), 1, tabData.n
+        lbl.TextColor3, lbl.Font, lbl.TextSize = Color3.fromRGB(255,255,255), C_FONT, 16
+
+        btn.MouseEnter:Connect(function() TS:Create(btn, TweenInfo.new(0.2), {BackgroundColor3 = C_ON}):Play() end)
+        btn.MouseLeave:Connect(function() TS:Create(btn, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(60, 25, 85)}):Play() end)
+        btn.MouseButton1Click:Connect(function() openZone(tabData) end)
+    end
+
+    -- ======================================================
+    -- ⚙️ SETTINGS PANEL
     -- ======================================================
     local SetPnl = Instance.new("Frame", Main)
     SetPnl.Size, SetPnl.Position, SetPnl.BackgroundColor3 = UDim2.new(1,0,1,-35), UDim2.new(0,0,0,35), Color3.fromRGB(15,10,25)
     SetPnl.BackgroundTransparency, SetPnl.ZIndex, SetPnl.Visible, SetPnl.Active = 0.2, 100, false, true 
     
     local SetBox = Instance.new("Frame", SetPnl)
-    SetBox.Size, SetBox.AnchorPoint, SetBox.Position = UDim2.new(0,350,0,280), Vector2.new(0.5,0.5), UDim2.new(0.5,0,0.5,0)
-    SetBox.BackgroundColor3, SetBox.ZIndex, SetBox.Active = Color3.fromRGB(35,20,50), 101, true
-    Instance.new("UICorner", SetBox).CornerRadius = UDim.new(0,8)
+    SetBox.Size, SetBox.AnchorPoint, SetBox.Position = UDim2.new(0, 320, 0, 260), Vector2.new(0.5, 0.5), UDim2.new(0.5, 0, 0.5, 0)
+    SetBox.BackgroundColor3, SetBox.ZIndex, SetBox.Active = Color3.fromRGB(35, 20, 50), 101, true
+    Instance.new("UICorner", SetBox).CornerRadius = UDim.new(0, 8)
     local SetStrk = Instance.new("UIStroke", SetBox)
     SetStrk.Color, SetStrk.Thickness = C_BASE, 2
     
     local SetTitle = Instance.new("TextLabel", SetBox)
-    SetTitle.Size, SetTitle.Position, SetTitle.BackgroundTransparency, SetTitle.Text = UDim2.new(1,0,0,50), UDim2.new(0,0,0,0), 1, "SETTINGS"
-    SetTitle.TextColor3, SetTitle.Font, SetTitle.TextSize, SetTitle.ZIndex = Color3.fromRGB(255,255,255), C_FONT, 20, 102
+    SetTitle.Size, SetTitle.Position, SetTitle.BackgroundTransparency = UDim2.new(1, 0, 0, 45), UDim2.new(0, 0, 0, 0), 1
+    SetTitle.Text, SetTitle.TextColor3, SetTitle.Font, SetTitle.TextSize, SetTitle.ZIndex = "SETTINGS", Color3.fromRGB(255, 255, 255), C_FONT, 20, 102
     
     local SetClose = Instance.new("TextButton", SetBox)
-    SetClose.Size, SetClose.AnchorPoint, SetClose.Position, SetClose.BackgroundColor3 = UDim2.new(0,100,0,35), Vector2.new(0.5,1), UDim2.new(0.5,0,1,-20), C_ON
-    SetClose.Text, SetClose.TextColor3, SetClose.Font, SetClose.ZIndex = "Close", Color3.fromRGB(255,255,255), C_FONT, 102
-    Instance.new("UICorner", SetClose).CornerRadius = UDim.new(0,6)
+    SetClose.Size, SetClose.AnchorPoint, SetClose.Position, SetClose.BackgroundColor3 = UDim2.new(0, 120, 0, 35), Vector2.new(0.5, 1), UDim2.new(0.5, 0, 1, -15), C_ON
+    SetClose.Text, SetClose.TextColor3, SetClose.Font, SetClose.ZIndex = "Close", Color3.fromRGB(255, 255, 255), C_FONT, 102
+    Instance.new("UICorner", SetClose).CornerRadius = UDim.new(0, 6)
+
+    local SetItems = Instance.new("Frame", SetBox)
+    SetItems.Size, SetItems.Position, SetItems.BackgroundTransparency = UDim2.new(1, -40, 1, -110), UDim2.new(0, 20, 0, 45), 1
+    SetItems.ZIndex = 102
     
-    local FontBtn = Instance.new("TextButton", SetBox)
-    FontBtn.Size, FontBtn.Position, FontBtn.BackgroundColor3 = UDim2.new(0,150,0,30), UDim2.new(0,170,0,70), Color3.fromRGB(50,35,75)
-    FontBtn.Text, FontBtn.TextColor3, FontBtn.Font, FontBtn.TextSize, FontBtn.ZIndex = C_FONT.Name, C_HL, C_FONT, 14, 102
-    Instance.new("UICorner", FontBtn).CornerRadius = UDim.new(0,4)
+    local SetLayout = Instance.new("UIListLayout", SetItems)
+    SetLayout.SortOrder, SetLayout.Padding = Enum.SortOrder.LayoutOrder, UDim.new(0, 12)
+    SetLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
+
+    local function createSettingRow(titleText, inputElement)
+        local Row = Instance.new("Frame", SetItems)
+        Row.Size, Row.BackgroundTransparency = UDim2.new(1, 0, 0, 32), 1
+        
+        local Lbl = Instance.new("TextLabel", Row)
+        Lbl.Size, Lbl.Position, Lbl.BackgroundTransparency = UDim2.new(0.5, -5, 1, 0), UDim2.new(0, 0, 0, 0), 1
+        Lbl.Text, Lbl.TextColor3, Lbl.Font, Lbl.TextSize = titleText, Color3.fromRGB(220, 220, 220), C_FONT, 16
+        Lbl.TextXAlignment = Enum.TextXAlignment.Left
+        
+        inputElement.Parent = Row
+        inputElement.Size = UDim2.new(0.5, -5, 1, 0)
+        inputElement.Position = UDim2.new(0.5, 5, 0, 0)
+        inputElement.ZIndex = 103
+    end
+
+    local FontBtn = Instance.new("TextButton")
+    FontBtn.BackgroundColor3 = Color3.fromRGB(50, 35, 75)
+    FontBtn.Text, FontBtn.TextColor3, FontBtn.Font, FontBtn.TextSize = C_FONT.Name, C_HL, C_FONT, 14
+    Instance.new("UICorner", FontBtn).CornerRadius = UDim.new(0, 4)
+    createSettingRow("Font Style", FontBtn)
     
     local FontList = {Enum.Font.GothamMedium, Enum.Font.Roboto, Enum.Font.Ubuntu, Enum.Font.SciFi, Enum.Font.Arcade, Enum.Font.Code}
     local fIdx = 1
-
     FontBtn.MouseButton1Click:Connect(function()
         fIdx = (fIdx % #FontList) + 1
         local newFont = FontList[fIdx]
@@ -307,14 +426,14 @@ return function(Config)
         end
     end)
 
-    local KeyBtn = Instance.new("TextButton", SetBox)
-    KeyBtn.Size, KeyBtn.Position, KeyBtn.BackgroundColor3 = UDim2.new(0,150,0,30), UDim2.new(0,170,0,120), Color3.fromRGB(50,35,75)
-    KeyBtn.Text, KeyBtn.TextColor3, KeyBtn.Font, KeyBtn.TextSize, KeyBtn.ZIndex = TOGGLE_KEY.Name, C_HL, C_FONT, 14, 102
-    Instance.new("UICorner", KeyBtn).CornerRadius = UDim.new(0,4)
+    local KeyBtn = Instance.new("TextButton")
+    KeyBtn.BackgroundColor3 = Color3.fromRGB(50, 35, 75)
+    KeyBtn.Text, KeyBtn.TextColor3, KeyBtn.Font, KeyBtn.TextSize = TOGGLE_KEY.Name, C_HL, C_FONT, 14
+    Instance.new("UICorner", KeyBtn).CornerRadius = UDim.new(0, 4)
+    createSettingRow("Toggle Key", KeyBtn)
 
     local isBinding = false
-    KeyBtn.MouseButton1Click:Connect(function() isBinding = true KeyBtn.Text = "... Press Any Key ..." end)
-
+    KeyBtn.MouseButton1Click:Connect(function() isBinding = true KeyBtn.Text = "... Press Key ..." end)
     UIS.InputBegan:Connect(function(inp, gpe)
         if isBinding and inp.UserInputType == Enum.UserInputType.Keyboard then
             TOGGLE_KEY, KeyBtn.Text, isBinding = inp.KeyCode, inp.KeyCode.Name, false
@@ -323,21 +442,26 @@ return function(Config)
         end
     end)
 
-    local BgLbl = Instance.new("TextLabel", SetBox)
-    BgLbl.Size, BgLbl.Position, BgLbl.BackgroundTransparency = UDim2.new(0,100,0,30), UDim2.new(0,30,0,170), 1
-    BgLbl.Text, BgLbl.TextColor3, BgLbl.Font, BgLbl.TextSize = "Background:", Color3.fromRGB(220,220,220), C_FONT, 16
-    BgLbl.TextXAlignment = Enum.TextXAlignment.Left
-
-    local BgBox = Instance.new("TextBox", SetBox)
-    BgBox.Size, BgBox.Position, BgBox.BackgroundColor3 = UDim2.new(0,150,0,30), UDim2.new(0,170,0,170), Color3.fromRGB(50,35,75)
-    BgBox.Text, BgBox.TextColor3, BgBox.Font, BgBox.TextSize = "", C_HL, C_FONT, 14
-    BgBox.PlaceholderText = "Paste Image ID..."
-    Instance.new("UICorner", BgBox).CornerRadius = UDim.new(0,4)
+    local BgBox = Instance.new("TextBox")
+    BgBox.BackgroundColor3 = Color3.fromRGB(50, 35, 75)
+    BgBox.Text = ""
+    BgBox.PlaceholderText = "e.g. 30, 15, 45"
+    BgBox.TextColor3 = C_HL
+    BgBox.Font = C_FONT
+    BgBox.TextSize = 14
+    Instance.new("UICorner", BgBox).CornerRadius = UDim.new(0, 4)
+    createSettingRow("UI Color (RGB)", BgBox)
 
     BgBox.FocusLost:Connect(function()
-        local id = BgBox.Text
-        if id ~= "" then
-            if tonumber(id) then Grid.Image = "rbxassetid://" .. id else Grid.Image = id end
+        local text = BgBox.Text
+        if text ~= "" then
+            local r, g, b = text:match("(%d+)%s*,%s*(%d+)%s*,%s*(%d+)")
+            if r and g and b then
+                Cont.BackgroundColor3 = Color3.fromRGB(tonumber(r), tonumber(g), tonumber(b))
+            else
+                BgBox.Text = ""
+                BgBox.PlaceholderText = "Invalid Format!"
+            end
         end
     end)
 
@@ -345,120 +469,91 @@ return function(Config)
     SetClose.MouseButton1Click:Connect(function() SetPnl.Visible = false end)
 
     -- ======================================================
-    -- 🌟 BOTTOM TABS UX & START MENU
+    -- 🌟 START MENU & TYPEWRITER EFFECT
     -- ======================================================
-    -- [NEW] สร้างหน้าจอ Start Menu ตรงกลาง
     local StartGroup = Instance.new("CanvasGroup", Cont)
     StartGroup.Size, StartGroup.Position = UDim2.new(1, 0, 1, 0), UDim2.new(0, 0, 0, 0)
     StartGroup.BackgroundTransparency, StartGroup.ZIndex = 1, 15
 
     local WelcomeText = Instance.new("TextLabel", StartGroup)
-    WelcomeText.Size, WelcomeText.Position, WelcomeText.AnchorPoint = UDim2.new(0, 400, 0, 50), UDim2.new(0.5, 0, 0.4, 0), Vector2.new(0.5, 0.5)
-    WelcomeText.BackgroundTransparency, WelcomeText.Text = 1, "🔥 ยินดีต้อนรับสู่ " .. UI_TITLE .. " 🔥"
-    WelcomeText.TextColor3, WelcomeText.Font, WelcomeText.TextSize = Color3.fromRGB(255, 255, 255), Enum.Font.GothamBold, 28
+    WelcomeText.Size, WelcomeText.Position, WelcomeText.AnchorPoint = UDim2.new(0, 600, 0, 60), UDim2.new(0.5, 0, 0.4, 0), Vector2.new(0.5, 0.5)
+    WelcomeText.BackgroundTransparency, WelcomeText.Text = 1, ""
+    WelcomeText.TextColor3, WelcomeText.Font, WelcomeText.TextSize = Color3.fromRGB(255, 255, 255), CENTER_TEXT_FONT, CENTER_TEXT_SIZE
+    local WStrk = Instance.new("UIStroke", WelcomeText)
+    WStrk.Color, WStrk.Thickness, WStrk.Transparency = Color3.fromRGB(0, 0, 0), 2, 0.5
 
     local StartBtn = Instance.new("TextButton", StartGroup)
-    StartBtn.Size, StartBtn.Position, StartBtn.AnchorPoint = UDim2.new(0, 200, 0, 45), UDim2.new(0.5, 0, 0.55, 0), Vector2.new(0.5, 0.5)
+    StartBtn.Size, StartBtn.Position, StartBtn.AnchorPoint = UDim2.new(0, 200, 0, 45), UDim2.new(0.5, 0, 0.6, 0), Vector2.new(0.5, 0.5)
     StartBtn.BackgroundColor3, StartBtn.Text, StartBtn.TextColor3 = Color3.fromRGB(200, 50, 60), "เริ่มใช้งาน (START)", Color3.fromRGB(255, 255, 255)
     StartBtn.Font, StartBtn.TextSize = Enum.Font.GothamBold, 18
     Instance.new("UICorner", StartBtn).CornerRadius = UDim.new(0, 8)
     local StartStrk = Instance.new("UIStroke", StartBtn)
     StartStrk.Color, StartStrk.Thickness = Color3.fromRGB(255, 100, 100), 2
 
-    -- เอฟเฟกต์ Hover ปุ่ม Start
     StartBtn.MouseEnter:Connect(function() TS:Create(StartBtn, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(230, 70, 80)}):Play() end)
     StartBtn.MouseLeave:Connect(function() TS:Create(StartBtn, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(200, 50, 60)}):Play() end)
 
-    -- [MODIFIED] แถบเมนูด้านล่าง (ซ่อนไว้ด้านล่างจอตอนเริ่มต้น)
-    local SlotP = Instance.new("Frame", Cont)
-    SlotP.AnchorPoint = Vector2.new(0.5, 1)
-    SlotP.Position = UDim2.new(0.5, 0, 1.5, 0) -- ซ่อนไว้ใต้หน้าจอก่อน
-    SlotP.Size, SlotP.BackgroundColor3 = UDim2.new(0, 680, 0, 55), Color3.fromRGB(15, 5, 20)
-    SlotP.BackgroundTransparency, SlotP.ZIndex = 0.4, 6
-    Instance.new("UICorner", SlotP).CornerRadius = UDim.new(0, 8)
-    Instance.new("UIStroke", SlotP).Color = Color3.fromRGB(180, 80, 255)
-    
-    local LLo = Instance.new("UIListLayout", SlotP)
-    LLo.FillDirection, LLo.Padding, LLo.HorizontalAlignment, LLo.VerticalAlignment = Enum.FillDirection.Horizontal, UDim.new(0, 10), Enum.HorizontalAlignment.Center, Enum.VerticalAlignment.Center
+    -- ฟังก์ชันสำหรับพิมพ์ดีดบน Start Screen
+    local isStarted = false
+    local function getGraphemes(str)
+        local graphemes = {}
+        for first, last in utf8.graphemes(str) do
+            table.insert(graphemes, string.sub(str, first, last))
+        end
+        return graphemes
+    end
 
-    -- [NEW] เมื่อกดปุ่ม Start ให้ซ่อน Start Menu แล้วเลื่อนแถบ Tab ขึ้นมา
+    if SHOW_CENTER_TEXT and #CENTER_TEXT_DATA > 0 then
+        task.spawn(function()
+            while not isStarted do
+                for _, str in ipairs(CENTER_TEXT_DATA) do
+                    if isStarted then break end
+                    local graphemes = getGraphemes(str)
+                    local currentText = ""
+                    
+                    -- พิมพ์เข้า
+                    for i = 1, #graphemes do
+                        if isStarted then break end
+                        currentText = currentText .. graphemes[i]
+                        WelcomeText.Text = currentText
+                        task.wait(TYPE_SPEED)
+                    end
+                    
+                    if isStarted then break end
+                    task.wait(PAUSE_TIME)
+                    
+                    -- ลบออก
+                    if #CENTER_TEXT_DATA > 1 then
+                        for i = #graphemes, 1, -1 do
+                            if isStarted then break end
+                            currentText = ""
+                            for j = 1, i - 1 do
+                                currentText = currentText .. graphemes[j]
+                            end
+                            WelcomeText.Text = currentText
+                            task.wait(TYPE_SPEED / 2)
+                        end
+                        if isStarted then break end
+                        task.wait(0.5)
+                    end
+                end
+                if #CENTER_TEXT_DATA == 1 then break end
+            end
+        end)
+    else
+        WelcomeText.Text = "🔥 " .. UI_TITLE .. " 🔥"
+    end
+
     StartBtn.MouseButton1Click:Connect(function()
+        isStarted = true -- หยุดลูปอนิเมชันพิมพ์ดีด
         local fadeOut = TS:Create(StartGroup, ti, {GroupTransparency = 1})
         fadeOut:Play()
         fadeOut.Completed:Connect(function() StartGroup.Visible = false end)
         
-        -- แอนิเมชันสไลด์แถบเมนูขึ้นมา
-        TS:Create(SlotP, TweenInfo.new(0.6, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {Position = UDim2.new(0.5, 0, 1, -15)}):Play()
+        -- โชว์หน้า ZoneSelection 
+        ZoneGroup.Visible = true
+        TS:Create(ZoneGroup, TweenInfo.new(0.6, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {GroupTransparency = 0}):Play()
     end)
-
-    for _, tabData in ipairs(FIXED_TABS) do
-        local btn = Instance.new("TextButton", SlotP)
-        btn.Size, btn.BackgroundColor3 = UDim2.new(0, (tabData.id=="Back" and 90 or 75), 0, 32), Color3.fromRGB(80, 15, 25) 
-        btn.Text, btn.AutoButtonColor, btn.ZIndex = "", false, 7
-        Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 6)
-        local BStrk = Instance.new("UIStroke", btn)
-        BStrk.Color, BStrk.Thickness = Color3.fromRGB(200, 40, 40), 1.2
-
-        local lbl = Instance.new("TextLabel", btn)
-        lbl.Size, lbl.BackgroundTransparency, lbl.Text = UDim2.new(1,0,1,0), 1, tabData.n
-        lbl.TextColor3, lbl.Font, lbl.TextSize, lbl.ZIndex = Color3.fromRGB(255,255,255), C_FONT, 11, 8
-
-        btn.MouseButton1Click:Connect(function()
-            -- แสดง Panel เมื่อกดโฟกัส
-            HBox.Visible = true
-            RPane.Visible = true
-
-            RTit.Text = "Zone: " .. tabData.n
-            RenderBoxes(TAB_BOXES[tabData.id] or {})
-            TS:Create(HBox, ti, {Position = UDim2.new(0.25, 0, 0.45, 0)}):Play()
-            TS:Create(RPane, ti, {Position = UDim2.new(0.97, 0, 0.45, 0)}):Play()
-
-            local char = p.Character
-            if not char or not char:FindFirstChild("HumanoidRootPart") then return end
-            camera.CameraType = Enum.CameraType.Scriptable
-            clearHighlights()
-            local fp = char.HumanoidRootPart
-            for _, pName in ipairs(tabData.t) do
-                local part = char:FindFirstChild(pName)
-                if part and part:IsA("BasePart") then
-                    fp = part
-                    local hb = Instance.new("SelectionBox", part)
-                    hb.Name = "VFXHub_Highlight"
-                    hb.Adornee = part
-                    hb.Color3 = C_HL
-                    hb.SurfaceColor3 = C_HL
-                    hb.LineThickness = 0.05
-                    hb.Transparency = 0
-                    hb.SurfaceTransparency = 0.7
-                end
-            end
-            local zD = tabData.zoom or 4
-            local camPos = (tabData.id == "Back") and (fp.CFrame * CFrame.new(-3, 1, zD + 2)) or (fp.CFrame * CFrame.new(-3, 1, -zD - 2))
-            TS:Create(camera, ti, {CFrame = CFrame.lookAt(camPos.Position, fp.Position)}):Play()
-        end)
-    end
-
-    -- ======================================================
-    -- 🔙 ZOOM OUT LOGIC (กดพื้นที่ว่าง)
-    -- ======================================================
-    local function performZoomOut()
-        local tw = TS:Create(RPane, ti, {Position = UDim2.new(1.5, 0, 0.45, 0)})
-        tw:Play()
-        TS:Create(HBox, ti, {Position = UDim2.new(0.5, 0, 0.45, 0)}):Play()
-        
-        -- ซ่อน Big Preview ไปพร้อมกัน
-        TS:Create(BigPreview, ti, {ImageTransparency = 1}):Play()
-        
-        tw.Completed:Connect(function()
-            HBox.Visible = false
-            RPane.Visible = false
-        end)
-
-        camera.CameraType = Enum.CameraType.Custom
-        clearHighlights()
-    end
-
-    HBox.MouseButton1Click:Connect(performZoomOut)
 
     return { UI = UI, Toggle = toggleUI, Destroy = function() if UI then UI:Destroy() end end }
 end
