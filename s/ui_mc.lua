@@ -5,7 +5,7 @@
     ██║     ██║   ██║██╔══██║    ██╔══██║██║     ██║     
     ███████╗╚██████╔╝██║  ██║    ██║  ██║███████╗███████╗
     ╚══════╝ ╚═════╝ ╚═╝  ╚═╝    ╚═╝  ╚═╝╚══════╝╚══════╝
-    Library V8: Live Focus & Animated Center Text (Customizable Size)
+    Library V9: Centered Static Animated Text & Custom Font
 ]=]
 
 local P = game:GetService("Players")
@@ -31,7 +31,8 @@ return function(Config)
     -- 🟢 ตั้งค่าข้อความแอนิเมชันตรงกลาง
     local CENTER_TEXT = Config.CenterText or "✨ Welcome to Shadow VFX Hub ✨"
     local SHOW_CENTER_TEXT = Config.ShowCenterText == nil and true or Config.ShowCenterText
-    local CENTER_TEXT_SIZE = Config.CenterTextSize or 28 -- ปรับขนาดฟอนต์ได้ที่นี่ หรือจาก Main
+    local CENTER_TEXT_SIZE = Config.CenterTextSize or 28
+    local CENTER_TEXT_FONT = Config.CenterTextFont or C_FONT -- 🌟 รับค่าฟอนต์สำหรับ CenterText โดยเฉพาะ
 
     local TAB_BOXES = Config.TabBoxes or {}
     
@@ -252,15 +253,16 @@ return function(Config)
     end
 
     -- ======================================================
-    -- 🌟 CENTER ANIMATED TEXT (พิมพ์ดีดตรงกลาง)
+    -- 🌟 CENTER ANIMATED TEXT (ข้อความตรงกลาง)
     -- ======================================================
     local CenterAnimText = Instance.new("TextLabel", Cont)
     CenterAnimText.Name = "CenterText"
     CenterAnimText.AnchorPoint = Vector2.new(0.5, 0.5)
-    CenterAnimText.Position = UDim2.new(0.5, 0, 0.2, 0)
+    -- 🌟 ตั้งให้อยู่ตรงกลางของ GUI พอดี
+    CenterAnimText.Position = UDim2.new(0.5, 0, 0.5, 0)
     CenterAnimText.Size = UDim2.new(0.8, 0, 0, 40)
     CenterAnimText.BackgroundTransparency = 1
-    CenterAnimText.Font = C_FONT
+    CenterAnimText.Font = CENTER_TEXT_FONT -- 🌟 รับค่าฟอนต์จากด้านบน
     CenterAnimText.Text = "" 
     CenterAnimText.TextColor3 = C_HL
     CenterAnimText.TextSize = CENTER_TEXT_SIZE
@@ -274,14 +276,12 @@ return function(Config)
 
     if SHOW_CENTER_TEXT and CENTER_TEXT ~= "" then
         task.spawn(function()
-            local basePos = UDim2.new(0.5, 0, 0.2, 0)
-            
-            -- อนิเมชันพิมพ์ดีด
+            -- อนิเมชันพิมพ์ดีด (เอาการเด้งขึ้นลงออกแล้ว)
             while task.wait() do
                 if not CenterAnimText.Parent then break end
                 local length = utf8.len(CENTER_TEXT) or #CENTER_TEXT
                 
-                -- พิมพ์เข้า
+                -- พิมพ์ข้อความเข้า
                 for i = 1, length do
                     if not CenterAnimText.Parent then break end
                     local offset = utf8.offset(CENTER_TEXT, i)
@@ -289,9 +289,9 @@ return function(Config)
                     task.wait(0.05)
                 end
                 
-                task.wait(3) 
+                task.wait(3) -- ค้างข้อความไว้ 3 วินาที
                 
-                -- ลบออก
+                -- ลบข้อความออก
                 for i = length, 1, -1 do
                     if not CenterAnimText.Parent then break end
                     local offset = utf8.offset(CENTER_TEXT, i)
@@ -335,12 +335,15 @@ return function(Config)
     local FontList = {Enum.Font.GothamMedium, Enum.Font.Roboto, Enum.Font.Ubuntu, Enum.Font.SciFi, Enum.Font.Arcade, Enum.Font.Code}
     local fIdx = 1
 
+    -- อัปเดตฟอนต์หน้าหลัก (แต่ไม่ไปยุ่งกับ CenterText)
     FontBtn.MouseButton1Click:Connect(function()
         fIdx = (fIdx % #FontList) + 1
         local newFont = FontList[fIdx]
         FontBtn.Text = newFont.Name
         for _, obj in ipairs(Main:GetDescendants()) do
-            if obj:IsA("TextLabel") or obj:IsA("TextButton") or obj:IsA("TextBox") then obj.Font = newFont end
+            if (obj:IsA("TextLabel") or obj:IsA("TextButton") or obj:IsA("TextBox")) and obj.Name ~= "CenterText" then 
+                obj.Font = newFont 
+            end
         end
     end)
 
