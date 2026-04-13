@@ -5,7 +5,7 @@
     ██║     ██║   ██║██╔══██║    ██╔══██║██║     ██║     
     ███████╗╚██████╔╝██║  ██║    ██║  ██║███████╗███████╗
     ╚══════╝ ╚═════╝ ╚═╝  ╚═╝    ╚═╝  ╚═╝╚══════╝╚══════╝
-    Library V16: Added Hover Big Preview
+    Library V18: Fixed CenterText & Changed to Solid Background
 ]=]
 
 local P = game:GetService("Players")
@@ -22,11 +22,21 @@ return function(Config)
     local C_BASE = Config.BaseColor or Color3.fromRGB(160, 80, 255)     
     local C_HL = Config.HighlightColor or Color3.fromRGB(100, 255, 255) 
     local C_ON = Config.ButtonColor or Color3.fromRGB(100, 70, 150)
-    local BG_IMAGE = Config.BackgroundImage or "rbxassetid://277037193"
+    
+    -- 🎨 [NEW] สีพื้นหลังแทนการใช้รูปภาพ
+    local C_BG = Config.BackgroundColor or Color3.fromRGB(30, 15, 45)
+    local BG_TRANS = Config.BackgroundTransparency or 0.2
     
     local TOGGLE_KEY = Config.ToggleKey or Enum.KeyCode.RightControl
     local C_FONT = Config.Font or Enum.Font.GothamMedium
     local INFO_TITLE = Config.InfoTitle or "SYSTEM INFO"
+    
+    -- 🌟 [NEW] ตั้งค่า Center Text
+    local CENTER_TEXT = Config.CenterText or "ระบบพร้อมใช้งาน ยินดีต้อนรับ!"
+    local CENTER_TEXT_SIZE = Config.CenterTextSize or 32
+    local CENTER_TEXT_FONT = Config.CenterTextFont or Enum.Font.FredokaOne
+    local SHOW_CENTER_TEXT = Config.ShowCenterText
+    if SHOW_CENTER_TEXT == nil then SHOW_CENTER_TEXT = true end
     
     local TAB_BOXES = Config.TabBoxes or {}
     
@@ -100,17 +110,31 @@ return function(Config)
     local mMax = mkMac(Color3.fromRGB(39, 201, 63))  
 
     -- ======================================================
-    -- 📦 CONTENT AREA 
+    -- 📦 CONTENT AREA (Solid Background)
     -- ======================================================
     local Cont = Instance.new("Frame", Main)
-    Cont.Position, Cont.Size, Cont.BackgroundColor3, Cont.ClipsDescendants = UDim2.new(0,0,0,35), UDim2.new(1,0,1,-35), Color3.fromRGB(30,15,45), true
-    Cont.BackgroundTransparency = 0.5
+    Cont.Position, Cont.Size = UDim2.new(0,0,0,35), UDim2.new(1,0,1,-35)
+    Cont.BackgroundColor3 = C_BG -- ใช้สีที่ตั้งค่ามาจาก Config
+    Cont.BackgroundTransparency = BG_TRANS
+    Cont.ClipsDescendants = true
     Cont.Visible = true
 
-    local Grid = Instance.new("ImageLabel", Cont)
-    Grid.Size, Grid.BackgroundTransparency, Grid.Image, Grid.ImageColor3 = UDim2.new(1,0,1,0), 1, BG_IMAGE, Color3.fromRGB(200,100,255)
-    Grid.ImageTransparency = 0.8
-    Grid.ScaleType, Grid.TileSize = Enum.ScaleType.Tile, UDim2.new(0,50,0,50)
+    -- 🌟 [NEW] Center Text Label
+    local CenterTextLbl = Instance.new("TextLabel", Cont)
+    CenterTextLbl.AnchorPoint, CenterTextLbl.Position = Vector2.new(0.5, 0.5), UDim2.new(0.5, 0, 0.45, 0)
+    CenterTextLbl.Size = UDim2.new(0.8, 0, 0.2, 0)
+    CenterTextLbl.BackgroundTransparency = 1
+    CenterTextLbl.Text = CENTER_TEXT
+    CenterTextLbl.TextColor3 = Color3.fromRGB(255, 255, 255)
+    CenterTextLbl.Font = CENTER_TEXT_FONT
+    CenterTextLbl.TextSize = CENTER_TEXT_SIZE
+    CenterTextLbl.Visible = SHOW_CENTER_TEXT
+    CenterTextLbl.ZIndex = 2
+    
+    local CenterTextStrk = Instance.new("UIStroke", CenterTextLbl)
+    CenterTextStrk.Color = Color3.fromRGB(0, 0, 0)
+    CenterTextStrk.Thickness = 2
+    CenterTextStrk.Transparency = 0.5
 
     -- ======================================================
     -- ⚙️ CORE SYSTEMS
@@ -180,13 +204,13 @@ return function(Config)
     local RStrk = Instance.new("UIStroke", RPane)
     RStrk.Color, RStrk.Transparency, RStrk.Thickness = C_BASE, 0.5, 1.5
 
-    -- 🌟 [NEW] รูปพรีวิวฝั่งซ้าย (ซ่อนไว้ก่อน จะแสดงตอนเอาเมาส์ชี้กล่อง)
+    -- 🌟 รูปพรีวิวฝั่งซ้าย (Hover)
     local BigPreview = Instance.new("ImageLabel", Cont)
     BigPreview.Size = UDim2.new(0, 260, 0, 260)
     BigPreview.AnchorPoint = Vector2.new(0.5, 0.5)
-    BigPreview.Position = UDim2.new(0.25, 0, 0.45, 0) -- วางไว้ครึ่งซ้ายของหน้าจอ
+    BigPreview.Position = UDim2.new(0.25, 0, 0.45, 0) 
     BigPreview.BackgroundTransparency = 1
-    BigPreview.ImageTransparency = 1 -- ซ่อนรูปภาพเริ่มต้น
+    BigPreview.ImageTransparency = 1 
     BigPreview.ScaleType = Enum.ScaleType.Fit
     BigPreview.ZIndex = 4
 
@@ -230,7 +254,6 @@ return function(Config)
                 img.Size, img.BackgroundTransparency, img.Position, img.AnchorPoint = UDim2.new(1, -10, 1, -10), 1, UDim2.new(0.5, 0, 0.5, 0), Vector2.new(0.5, 0.5)
                 img.Image = data.Image
                 
-                -- 🌟 [NEW] ระบบ Hover แสดงผล BigPreview ทางด้านซ้าย
                 img.MouseEnter:Connect(function()
                     BigPreview.Image = data.Image
                     TS:Create(BigPreview, TweenInfo.new(0.2), {ImageTransparency = 0}):Play()
@@ -249,19 +272,6 @@ return function(Config)
                             data.Callback() 
                         end
                     end
-                    local char = p.Character
-                    if char then
-                        local prevFolder = char:FindFirstChild("PreviewEffects") or Instance.new("Folder", char)
-                        prevFolder.Name = "PreviewEffects"
-                        if data.Preview then
-                            if type(data.Preview) == "string" and data.Preview:match("^http") then
-                                local success, result = pcall(function() return loadstring(game:HttpGet(data.Preview))() end)
-                                if success and type(result) == "function" then result(char, prevFolder) end
-                            elseif type(data.Preview) == "function" then
-                                data.Preview(char, prevFolder)
-                            end
-                        end
-                    end
                 end)
             end
         end
@@ -275,7 +285,7 @@ return function(Config)
     SetPnl.BackgroundTransparency, SetPnl.ZIndex, SetPnl.Visible, SetPnl.Active = 0.2, 100, false, true 
     
     local SetBox = Instance.new("Frame", SetPnl)
-    SetBox.Size, SetBox.AnchorPoint, SetBox.Position = UDim2.new(0,350,0,280), Vector2.new(0.5,0.5), UDim2.new(0.5,0,0.5,0)
+    SetBox.Size, SetBox.AnchorPoint, SetBox.Position = UDim2.new(0,350,0,180), Vector2.new(0.5,0.5), UDim2.new(0.5,0,0.5,0)
     SetBox.BackgroundColor3, SetBox.ZIndex, SetBox.Active = Color3.fromRGB(35,20,50), 101, true
     Instance.new("UICorner", SetBox).CornerRadius = UDim.new(0,8)
     local SetStrk = Instance.new("UIStroke", SetBox)
@@ -286,7 +296,7 @@ return function(Config)
     SetTitle.TextColor3, SetTitle.Font, SetTitle.TextSize, SetTitle.ZIndex = Color3.fromRGB(255,255,255), C_FONT, 20, 102
     
     local SetClose = Instance.new("TextButton", SetBox)
-    SetClose.Size, SetClose.AnchorPoint, SetClose.Position, SetClose.BackgroundColor3 = UDim2.new(0,100,0,35), Vector2.new(0.5,1), UDim2.new(0.5,0,1,-20), C_ON
+    SetClose.Size, SetClose.AnchorPoint, SetClose.Position, SetClose.BackgroundColor3 = UDim2.new(0,100,0,35), Vector2.new(0.5,1), UDim2.new(0.5,0,1,-15), C_ON
     SetClose.Text, SetClose.TextColor3, SetClose.Font, SetClose.ZIndex = "Close", Color3.fromRGB(255,255,255), C_FONT, 102
     Instance.new("UICorner", SetClose).CornerRadius = UDim.new(0,6)
     
@@ -308,7 +318,7 @@ return function(Config)
     end)
 
     local KeyBtn = Instance.new("TextButton", SetBox)
-    KeyBtn.Size, KeyBtn.Position, KeyBtn.BackgroundColor3 = UDim2.new(0,150,0,30), UDim2.new(0,170,0,120), Color3.fromRGB(50,35,75)
+    KeyBtn.Size, KeyBtn.Position, KeyBtn.BackgroundColor3 = UDim2.new(0,150,0,30), UDim2.new(0,170,0,115), Color3.fromRGB(50,35,75)
     KeyBtn.Text, KeyBtn.TextColor3, KeyBtn.Font, KeyBtn.TextSize, KeyBtn.ZIndex = TOGGLE_KEY.Name, C_HL, C_FONT, 14, 102
     Instance.new("UICorner", KeyBtn).CornerRadius = UDim.new(0,4)
 
@@ -320,24 +330,6 @@ return function(Config)
             TOGGLE_KEY, KeyBtn.Text, isBinding = inp.KeyCode, inp.KeyCode.Name, false
         elseif not gpe and inp.KeyCode == TOGGLE_KEY and not isBinding then
             toggleUI()
-        end
-    end)
-
-    local BgLbl = Instance.new("TextLabel", SetBox)
-    BgLbl.Size, BgLbl.Position, BgLbl.BackgroundTransparency = UDim2.new(0,100,0,30), UDim2.new(0,30,0,170), 1
-    BgLbl.Text, BgLbl.TextColor3, BgLbl.Font, BgLbl.TextSize = "Background:", Color3.fromRGB(220,220,220), C_FONT, 16
-    BgLbl.TextXAlignment = Enum.TextXAlignment.Left
-
-    local BgBox = Instance.new("TextBox", SetBox)
-    BgBox.Size, BgBox.Position, BgBox.BackgroundColor3 = UDim2.new(0,150,0,30), UDim2.new(0,170,0,170), Color3.fromRGB(50,35,75)
-    BgBox.Text, BgBox.TextColor3, BgBox.Font, BgBox.TextSize = "", C_HL, C_FONT, 14
-    BgBox.PlaceholderText = "Paste Image ID..."
-    Instance.new("UICorner", BgBox).CornerRadius = UDim.new(0,4)
-
-    BgBox.FocusLost:Connect(function()
-        local id = BgBox.Text
-        if id ~= "" then
-            if tonumber(id) then Grid.Image = "rbxassetid://" .. id else Grid.Image = id end
         end
     end)
 
@@ -370,6 +362,10 @@ return function(Config)
         lbl.TextColor3, lbl.Font, lbl.TextSize, lbl.ZIndex = Color3.fromRGB(255,255,255), C_FONT, 11, 8
 
         btn.MouseButton1Click:Connect(function()
+            -- ซ่อน Center Text ด้วย Animation เฟดออก
+            TS:Create(CenterTextLbl, ti, {TextTransparency = 1}):Play()
+            TS:Create(CenterTextStrk, ti, {Transparency = 1}):Play()
+            
             -- แสดง Panel เมื่อกดโฟกัส
             HBox.Visible = true
             RPane.Visible = true
@@ -412,7 +408,11 @@ return function(Config)
         tw:Play()
         TS:Create(HBox, ti, {Position = UDim2.new(0.5, 0, 0.45, 0)}):Play()
         
-        -- ซ่อน Big Preview ไปพร้อมกัน
+        -- เฟดให้ Center Text กลับมา
+        TS:Create(CenterTextLbl, ti, {TextTransparency = 0}):Play()
+        TS:Create(CenterTextStrk, ti, {Transparency = 0.5}):Play()
+        
+        -- ซ่อน Big Preview 
         TS:Create(BigPreview, ti, {ImageTransparency = 1}):Play()
         
         tw.Completed:Connect(function()
