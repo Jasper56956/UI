@@ -5,7 +5,7 @@
     ██║     ██║   ██║██╔══██║    ██╔══██║██║     ██║     
     ███████╗╚██████╔╝██║  ██║    ██║  ██║███████╗███████╗
     ╚══════╝ ╚═════╝ ╚═╝  ╚═╝    ╚═╝  ╚═╝╚══════╝╚══════╝
-    Library V9: Centered Static Animated Text & Custom Font
+    Library V10: Solid Color Background & RGB Settings
 ]=]
 
 local P = game:GetService("Players")
@@ -22,7 +22,10 @@ return function(Config)
     local C_BASE = Config.BaseColor or Color3.fromRGB(160, 80, 255)     
     local C_HL = Config.HighlightColor or Color3.fromRGB(100, 255, 255) 
     local C_ON = Config.ButtonColor or Color3.fromRGB(100, 70, 150)
-    local BG_IMAGE = Config.BackgroundImage or "rbxassetid://277037193"
+    
+    -- 🟢 ตั้งค่าสีพื้นหลัง และ ความโปร่งใส
+    local BG_COLOR = Config.BackgroundColor or Color3.fromRGB(30, 15, 45)
+    local BG_TRANS = Config.BackgroundTransparency or 0.5 
     
     local TOGGLE_KEY = Config.ToggleKey or Enum.KeyCode.RightControl
     local C_FONT = Config.Font or Enum.Font.GothamMedium
@@ -32,7 +35,7 @@ return function(Config)
     local CENTER_TEXT = Config.CenterText or "✨ Welcome to Shadow VFX Hub ✨"
     local SHOW_CENTER_TEXT = Config.ShowCenterText == nil and true or Config.ShowCenterText
     local CENTER_TEXT_SIZE = Config.CenterTextSize or 28
-    local CENTER_TEXT_FONT = Config.CenterTextFont or C_FONT -- 🌟 รับค่าฟอนต์สำหรับ CenterText โดยเฉพาะ
+    local CENTER_TEXT_FONT = Config.CenterTextFont or C_FONT
 
     local TAB_BOXES = Config.TabBoxes or {}
     
@@ -106,17 +109,13 @@ return function(Config)
     local mMax = mkMac(Color3.fromRGB(39, 201, 63))  
 
     -- ======================================================
-    -- 📦 CONTENT AREA 
+    -- 📦 CONTENT AREA (ใช้สีแทนรูปภาพ)
     -- ======================================================
     local Cont = Instance.new("Frame", Main)
-    Cont.Position, Cont.Size, Cont.BackgroundColor3, Cont.ClipsDescendants = UDim2.new(0,0,0,35), UDim2.new(1,0,1,-35), Color3.fromRGB(30,15,45), true
-    Cont.BackgroundTransparency = 0.5
+    Cont.Position, Cont.Size, Cont.ClipsDescendants = UDim2.new(0,0,0,35), UDim2.new(1,0,1,-35), true
+    Cont.BackgroundColor3 = BG_COLOR -- 🌟 ใช้ตัวแปรสี
+    Cont.BackgroundTransparency = BG_TRANS -- 🌟 ค่าความโปร่งใส
     Cont.Visible = true
-
-    local Grid = Instance.new("ImageLabel", Cont)
-    Grid.Size, Grid.BackgroundTransparency, Grid.Image, Grid.ImageColor3 = UDim2.new(1,0,1,0), 1, BG_IMAGE, Color3.fromRGB(200,100,255)
-    Grid.ImageTransparency = 0.8
-    Grid.ScaleType, Grid.TileSize = Enum.ScaleType.Tile, UDim2.new(0,50,0,50)
 
     -- ======================================================
     -- ⚙️ CORE SYSTEMS
@@ -172,7 +171,7 @@ return function(Config)
     end)
 
     -- ======================================================
-    -- 📁 CONTENT DETAILS (ซ่อนไว้ตอนแรก)
+    -- 📁 CONTENT DETAILS
     -- ======================================================
     local HBox = Instance.new("TextButton", Cont)
     HBox.AnchorPoint, HBox.Position, HBox.Size, HBox.BackgroundTransparency, HBox.Text, HBox.ZIndex = Vector2.new(0.5,0.5), UDim2.new(0.5,0,0.45,0), UDim2.new(0,350,0,350), 1, "", 5
@@ -258,11 +257,10 @@ return function(Config)
     local CenterAnimText = Instance.new("TextLabel", Cont)
     CenterAnimText.Name = "CenterText"
     CenterAnimText.AnchorPoint = Vector2.new(0.5, 0.5)
-    -- 🌟 ตั้งให้อยู่ตรงกลางของ GUI พอดี
     CenterAnimText.Position = UDim2.new(0.5, 0, 0.5, 0)
     CenterAnimText.Size = UDim2.new(0.8, 0, 0, 40)
     CenterAnimText.BackgroundTransparency = 1
-    CenterAnimText.Font = CENTER_TEXT_FONT -- 🌟 รับค่าฟอนต์จากด้านบน
+    CenterAnimText.Font = CENTER_TEXT_FONT 
     CenterAnimText.Text = "" 
     CenterAnimText.TextColor3 = C_HL
     CenterAnimText.TextSize = CENTER_TEXT_SIZE
@@ -276,12 +274,11 @@ return function(Config)
 
     if SHOW_CENTER_TEXT and CENTER_TEXT ~= "" then
         task.spawn(function()
-            -- อนิเมชันพิมพ์ดีด (เอาการเด้งขึ้นลงออกแล้ว)
             while task.wait() do
                 if not CenterAnimText.Parent then break end
                 local length = utf8.len(CENTER_TEXT) or #CENTER_TEXT
                 
-                -- พิมพ์ข้อความเข้า
+                -- พิมพ์เข้า
                 for i = 1, length do
                     if not CenterAnimText.Parent then break end
                     local offset = utf8.offset(CENTER_TEXT, i)
@@ -289,9 +286,9 @@ return function(Config)
                     task.wait(0.05)
                 end
                 
-                task.wait(3) -- ค้างข้อความไว้ 3 วินาที
+                task.wait(3) 
                 
-                -- ลบข้อความออก
+                -- ลบออก
                 for i = length, 1, -1 do
                     if not CenterAnimText.Parent then break end
                     local offset = utf8.offset(CENTER_TEXT, i)
@@ -335,7 +332,6 @@ return function(Config)
     local FontList = {Enum.Font.GothamMedium, Enum.Font.Roboto, Enum.Font.Ubuntu, Enum.Font.SciFi, Enum.Font.Arcade, Enum.Font.Code}
     local fIdx = 1
 
-    -- อัปเดตฟอนต์หน้าหลัก (แต่ไม่ไปยุ่งกับ CenterText)
     FontBtn.MouseButton1Click:Connect(function()
         fIdx = (fIdx % #FontList) + 1
         local newFont = FontList[fIdx]
@@ -363,21 +359,29 @@ return function(Config)
         end
     end)
 
+    -- 🌟 ระบบรับค่าสีพื้นหลังแบบ RGB
     local BgLbl = Instance.new("TextLabel", SetBox)
     BgLbl.Size, BgLbl.Position, BgLbl.BackgroundTransparency = UDim2.new(0,100,0,30), UDim2.new(0,30,0,170), 1
-    BgLbl.Text, BgLbl.TextColor3, BgLbl.Font, BgLbl.TextSize = "Background:", Color3.fromRGB(220,220,220), C_FONT, 16
+    BgLbl.Text, BgLbl.TextColor3, BgLbl.Font, BgLbl.TextSize = "BG Color (RGB):", Color3.fromRGB(220,220,220), C_FONT, 15
     BgLbl.TextXAlignment = Enum.TextXAlignment.Left
 
     local BgBox = Instance.new("TextBox", SetBox)
     BgBox.Size, BgBox.Position, BgBox.BackgroundColor3 = UDim2.new(0,150,0,30), UDim2.new(0,170,0,170), Color3.fromRGB(50,35,75)
     BgBox.Text, BgBox.TextColor3, BgBox.Font, BgBox.TextSize = "", C_HL, C_FONT, 14
-    BgBox.PlaceholderText = "Paste Image ID..."
+    BgBox.PlaceholderText = "e.g. 30, 15, 45"
     Instance.new("UICorner", BgBox).CornerRadius = UDim.new(0,4)
 
     BgBox.FocusLost:Connect(function()
-        local id = BgBox.Text
-        if id ~= "" then
-            if tonumber(id) then Grid.Image = "rbxassetid://" .. id else Grid.Image = id end
+        local text = BgBox.Text
+        if text ~= "" then
+            -- ใช้ Regex ดึงตัวเลข 3 ชุดที่คั่นด้วยลูกน้ำ
+            local r, g, b = text:match("(%d+)%s*,%s*(%d+)%s*,%s*(%d+)")
+            if r and g and b then
+                Cont.BackgroundColor3 = Color3.fromRGB(tonumber(r), tonumber(g), tonumber(b))
+            else
+                BgBox.Text = ""
+                BgBox.PlaceholderText = "Invalid Format!"
+            end
         end
     end)
 
