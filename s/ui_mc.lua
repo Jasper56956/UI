@@ -5,7 +5,7 @@
     ██║     ██║   ██║██╔══██║    ██╔══██║██║     ██║     
     ███████╗╚██████╔╝██║  ██║    ██║  ██║███████╗███████╗
     ╚══════╝ ╚═════╝ ╚═╝  ╚═╝    ╚═╝  ╚═╝╚══════╝╚══════╝
-    Library V7: Removed Hologram System, Live Player Focus Focus
+    Library V7.1: Removed Hologram, Live Focus, Added Back Center Text
 ]=]
 
 local P = game:GetService("Players")
@@ -28,6 +28,10 @@ return function(Config)
     local TOGGLE_KEY = Config.ToggleKey or Enum.KeyCode.RightControl
     local C_FONT = Config.Font or Enum.Font.GothamMedium
     local INFO_TITLE = Config.InfoTitle or "SYSTEM INFO"
+    
+    -- 🟢 ตั้งค่าข้อความแอนิเมชันตรงกลาง
+    local CENTER_TEXT = Config.CenterText or "✨ Welcome to Shadow VFX Hub ✨"
+    local SHOW_CENTER_TEXT = Config.ShowCenterText == nil and true or Config.ShowCenterText
     
     local TAB_BOXES = Config.TabBoxes or {}
     
@@ -136,23 +140,84 @@ return function(Config)
     Grid.ScaleType, Grid.TileSize = Enum.ScaleType.Tile, UDim2.new(0,50,0,50)
 
     -- 🔴 [[ DISMISS AREA (เต็ม Cont) ]]
-    local HBox = Instance.new("TextButton", Cont) -- เป็นลูกของ Cont เพื่อให้แยก Tween ได้
+    local HBox = Instance.new("TextButton", Cont)
     HBox.Name = "DismissArea"
     HBox.Position, HBox.Size = UDim2.new(0,0,0,0), UDim2.new(1,0,1,0)
     HBox.BackgroundTransparency = 1
     HBox.Text = ""
-    HBox.Visible = false -- ซ่อนไว้ก่อน
-    HBox.ZIndex = 1 -- อยู่หลังแผง VFX
+    HBox.Visible = false 
+    HBox.ZIndex = 1
+
+    -- ======================================================
+    -- 🌟 CENTER ANIMATED TEXT (พิมพ์ดีดตรงกลาง)
+    -- ======================================================
+    local CenterAnimText = Instance.new("TextLabel", Cont)
+    CenterAnimText.Name = "CenterText"
+    CenterAnimText.AnchorPoint = Vector2.new(0.5, 0.5)
+    CenterAnimText.Position = UDim2.new(0.5, 0, 0.2, 0)
+    CenterAnimText.Size = UDim2.new(0.8, 0, 0, 40)
+    CenterAnimText.BackgroundTransparency = 1
+    CenterAnimText.Font = C_FONT
+    CenterAnimText.Text = "" 
+    CenterAnimText.TextColor3 = C_HL
+    CenterAnimText.TextSize = 28
+    CenterAnimText.Visible = SHOW_CENTER_TEXT
+    CenterAnimText.ZIndex = 4
+    
+    local CStrk = Instance.new("UIStroke", CenterAnimText)
+    CStrk.Thickness = 2
+    CStrk.Color = Color3.fromRGB(0, 0, 0)
+    CStrk.Transparency = 0.3
+
+    if SHOW_CENTER_TEXT and CENTER_TEXT ~= "" then
+        task.spawn(function()
+            local basePos = UDim2.new(0.5, 0, 0.2, 0)
+            local tickCount = 0
+            
+            -- อนิเมชันลอยขึ้นลง
+            RS.RenderStepped:Connect(function()
+                if CenterAnimText.Parent then
+                    tickCount = tickCount + 0.05
+                    CenterAnimText.Position = basePos + UDim2.new(0, 0, 0, math.sin(tickCount) * 5)
+                end
+            end)
+            
+            -- อนิเมชันพิมพ์ดีด
+            while task.wait() do
+                if not CenterAnimText.Parent then break end
+                local length = utf8.len(CENTER_TEXT) or #CENTER_TEXT
+                
+                -- พิมพ์เข้า
+                for i = 1, length do
+                    if not CenterAnimText.Parent then break end
+                    local offset = utf8.offset(CENTER_TEXT, i)
+                    if offset then CenterAnimText.Text = string.sub(CENTER_TEXT, 1, offset) end
+                    task.wait(0.05)
+                end
+                
+                task.wait(3) 
+                
+                -- ลบออก
+                for i = length, 1, -1 do
+                    if not CenterAnimText.Parent then break end
+                    local offset = utf8.offset(CENTER_TEXT, i)
+                    if offset then CenterAnimText.Text = string.sub(CENTER_TEXT, 1, offset) end
+                    task.wait(0.02)
+                end
+                
+                task.wait(0.5)
+            end
+        end)
+    end
 
     -- [[ RIGHT PANEL (BOXES) ]]
-    local RPane = Instance.new("Frame", Cont) -- เป็นลูกของ Cont เพื่อให้แยก Tween ได้
+    local RPane = Instance.new("Frame", Cont)
     RPane.Name = "VFXPanel"
     RPane.AnchorPoint = Vector2.new(1,0.5)
     RPane.Size = UDim2.new(0, 420, 0, 320)
-    -- ซ่อนแผงไว้ก่อน (เดิมใช้ Pos 1.5,0,0.45,0)
-    RPane.Position = UDim2.new(1, 420, 0.5, 0) -- ซ่อนทางขวา
+    RPane.Position = UDim2.new(1, 420, 0.5, 0) 
     RPane.BackgroundColor3, RPane.BackgroundTransparency = Color3.fromRGB(25, 15, 40), 0.2
-    RPane.ZIndex = 2 -- อยู่หน้า DismissArea
+    RPane.ZIndex = 2 
     Instance.new("UICorner", RPane).CornerRadius = UDim.new(0, 8)
     local RStrk = Instance.new("UIStroke", RPane)
     RStrk.Color, RStrk.Transparency, RStrk.Thickness = C_BASE, 0.5, 1.5
@@ -162,7 +227,6 @@ return function(Config)
     RTit.Text, RTit.TextColor3, RTit.Font, RTit.TextSize = INFO_TITLE, Color3.fromRGB(255,255,255), C_FONT, 22
     RTit.TextXAlignment = Enum.TextXAlignment.Left
 
-    -- 📦 Scrollable Box Container
     local BoxContainer = Instance.new("ScrollingFrame", RPane)
     BoxContainer.Size, BoxContainer.Position, BoxContainer.BackgroundTransparency = UDim2.new(1, -20, 1, -70), UDim2.new(0, 10, 0, 60), 1
     BoxContainer.ScrollBarThickness = 4
@@ -171,14 +235,12 @@ return function(Config)
     BoxContainer.CanvasSize = UDim2.new(0, 0, 0, 0)
     BoxContainer.BorderSizePixel = 0
     
-    -- 🟢 Padding ดันขอบไม่ให้หาย
     local Padding = Instance.new("UIPadding", BoxContainer)
     Padding.PaddingTop = UDim.new(0, 8)
     Padding.PaddingBottom = UDim.new(0, 8)
     Padding.PaddingLeft = UDim.new(0, 5)
     Padding.PaddingRight = UDim.new(0, 5)
 
-    -- 🟢 Grid Layout 4 ช่องต่อแถว
     local BoxGridLayout = Instance.new("UIGridLayout", BoxContainer)
     BoxGridLayout.CellSize = UDim2.new(0, 80, 0, 90)
     BoxGridLayout.CellPadding = UDim2.new(0, 15, 0, 15)
@@ -205,7 +267,6 @@ return function(Config)
                 img.Image = data.Image
                 
                 img.MouseButton1Click:Connect(function()
-                    -- 1. ลอจิกการกดใส่ตัวจริง (รองรับ URL)
                     if data.Callback then 
                         if type(data.Callback) == "string" and data.Callback:match("^http") then
                             loadstring(game:HttpGet(data.Callback))()
@@ -322,12 +383,14 @@ return function(Config)
             RTit.Text = "Zone: " .. tabData.n
             RenderBoxes(TAB_BOXES[tabData.id] or {})
 
-            -- 🔴 [[ Tween UI ใหม่ ]]
-            HBox.Visible = true -- แสดงพื้นที่ Dismiss
-            TS:Create(RPane, ti, {Position = UDim2.new(0.97, 0, 0.5, 0)}):Play() -- แสดงแผงด้านขวา
-            TS:Create(Main, ti, {Position = UDim2.new(0.5, 0, 1.5, 0)}):Play() -- เลื่อนหน้าต่างหลักลง
+            -- ซ่อน Text ตรงกลางเมื่อเปิดกล่องเมนู
+            TS:Create(CenterAnimText, TweenInfo.new(0.3), {TextTransparency = 1}):Play()
+            TS:Create(CStrk, TweenInfo.new(0.3), {Transparency = 1}):Play()
 
-            -- 🟢 [[ ตรรกะกล้องจริงใหม่ ]]
+            HBox.Visible = true 
+            TS:Create(RPane, ti, {Position = UDim2.new(0.97, 0, 0.5, 0)}):Play() 
+            TS:Create(Main, ti, {Position = UDim2.new(0.5, 0, 1.5, 0)}):Play() 
+
             local char = p.Character
             if not char or not char:FindFirstChild("HumanoidRootPart") then return end
             local hrp = char.HumanoidRootPart
@@ -335,27 +398,24 @@ return function(Config)
             local camera = WS.CurrentCamera
             camera.CameraType = Enum.CameraType.Scriptable
 
-            -- กำหนดส่วนที่จะมอง
             local lookTarget
             for _, pName in ipairs(tabData.t) do
                 local found = char:FindFirstChild(pName)
                 if found then lookTarget = found break end
             end
-            if not lookTarget then lookTarget = hrp end -- ค่าเริ่มต้นหากไม่พบส่วนเฉพาะ
+            if not lookTarget then lookTarget = hrp end 
 
             local zoomDist = tabData.zoom or 4
             local targetAngle = tabData.angle or 0
             local offset = hrp.CFrame.LookVector * zoomDist
             local targetCFrame
 
-            -- สร้าง CFrame กล้องโดยใช้ระยะทางและ LookVector ของ HumanoidRootPart เพื่อให้คงที่กับทิศทางของผู้เล่น
-            if targetAngle == 180 then -- โฟกัสหลัง
+            if targetAngle == 180 then 
                 targetCFrame = CFrame.new(lookTarget.Position + offset, lookTarget.Position)
-            else -- โฟกัสหน้า (ค่าเริ่มต้น)
+            else 
                 targetCFrame = CFrame.new(lookTarget.Position - offset, lookTarget.Position)
             end
 
-            -- ทำให้กล้อง Tween อย่างราบรื่น
             local cameraTweenInfo = TweenInfo.new(0.5, Enum.EasingStyle.Exponential, Enum.EasingDirection.Out)
             TS:Create(camera, cameraTweenInfo, {CFrame = targetCFrame}):Play()
         end)
@@ -364,10 +424,13 @@ return function(Config)
     -- 🔴 [[ พื้นที่คลิกปิด ( Dismiss Area ) ]]
     HBox.MouseButton1Click:Connect(function()
         isPanelOpen = false
-        -- Tween UI กลับ
-        HBox.Visible = false -- ซ่อน DismissArea
-        TS:Create(RPane, ti, {Position = UDim2.new(1, 420, 0.5, 0)}):Play() -- ซ่อนแผงด้านขวา
-        TS:Create(Main, ti, {Position = UDim2.new(0.5, 0, 0.5, 0)}):Play() -- เลื่อนหน้าต่างหลักกลับขึ้นมา
+        HBox.Visible = false 
+        TS:Create(RPane, ti, {Position = UDim2.new(1, 420, 0.5, 0)}):Play() 
+        TS:Create(Main, ti, {Position = UDim2.new(0.5, 0, 0.5, 0)}):Play() 
+
+        -- โชว์ Text ตรงกลางอีกครั้งตอนปิดแผงด้านข้าง
+        TS:Create(CenterAnimText, TweenInfo.new(0.3), {TextTransparency = 0}):Play()
+        TS:Create(CStrk, TweenInfo.new(0.3), {Transparency = 0.3}):Play()
 
         -- คืนค่ากล้องจริง
         WS.CurrentCamera.CameraType = Enum.CameraType.Custom
