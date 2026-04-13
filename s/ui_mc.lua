@@ -5,7 +5,7 @@
     ██║     ██║   ██║██╔══██║    ██╔══██║██║     ██║     
     ███████╗╚██████╔╝██║  ██║    ██║  ██║███████╗███████╗
     ╚══════╝ ╚═════╝ ╚═╝  ╚═╝    ╚═╝  ╚═╝╚══════╝╚══════╝
-    Library V18: Fixed CenterText & Changed to Solid Background
+    Library V19: Typewriter CenterText & Fixed Settings UI
 ]=]
 
 local P = game:GetService("Players")
@@ -23,7 +23,6 @@ return function(Config)
     local C_HL = Config.HighlightColor or Color3.fromRGB(100, 255, 255) 
     local C_ON = Config.ButtonColor or Color3.fromRGB(100, 70, 150)
     
-    -- 🎨 [NEW] สีพื้นหลังแทนการใช้รูปภาพ
     local C_BG = Config.BackgroundColor or Color3.fromRGB(30, 15, 45)
     local BG_TRANS = Config.BackgroundTransparency or 0.2
     
@@ -31,10 +30,13 @@ return function(Config)
     local C_FONT = Config.Font or Enum.Font.GothamMedium
     local INFO_TITLE = Config.InfoTitle or "SYSTEM INFO"
     
-    -- 🌟 [NEW] ตั้งค่า Center Text
-    local CENTER_TEXT = Config.CenterText or "ระบบพร้อมใช้งาน ยินดีต้อนรับ!"
+    -- 🌟 [NEW] Center Text Typewriter Config
+    local CENTER_TEXT_DATA = Config.CenterText or {"ยินดีต้อนรับสู่ระบบ!", "เลือกส่วนที่ต้องการเพื่อเริ่มต้น"}
+    if type(CENTER_TEXT_DATA) == "string" then CENTER_TEXT_DATA = {CENTER_TEXT_DATA} end
     local CENTER_TEXT_SIZE = Config.CenterTextSize or 32
     local CENTER_TEXT_FONT = Config.CenterTextFont or Enum.Font.FredokaOne
+    local TYPE_SPEED = Config.TypingSpeed or 0.05
+    local PAUSE_TIME = Config.PauseTime or 2.5
     local SHOW_CENTER_TEXT = Config.ShowCenterText
     if SHOW_CENTER_TEXT == nil then SHOW_CENTER_TEXT = true end
     
@@ -114,27 +116,68 @@ return function(Config)
     -- ======================================================
     local Cont = Instance.new("Frame", Main)
     Cont.Position, Cont.Size = UDim2.new(0,0,0,35), UDim2.new(1,0,1,-35)
-    Cont.BackgroundColor3 = C_BG -- ใช้สีที่ตั้งค่ามาจาก Config
+    Cont.BackgroundColor3 = C_BG
     Cont.BackgroundTransparency = BG_TRANS
     Cont.ClipsDescendants = true
     Cont.Visible = true
 
-    -- 🌟 [NEW] Center Text Label
+    -- 🌟 [NEW] Typewriter Center Text
     local CenterTextLbl = Instance.new("TextLabel", Cont)
     CenterTextLbl.AnchorPoint, CenterTextLbl.Position = Vector2.new(0.5, 0.5), UDim2.new(0.5, 0, 0.45, 0)
     CenterTextLbl.Size = UDim2.new(0.8, 0, 0.2, 0)
     CenterTextLbl.BackgroundTransparency = 1
-    CenterTextLbl.Text = CENTER_TEXT
+    CenterTextLbl.Text = ""
     CenterTextLbl.TextColor3 = Color3.fromRGB(255, 255, 255)
     CenterTextLbl.Font = CENTER_TEXT_FONT
     CenterTextLbl.TextSize = CENTER_TEXT_SIZE
     CenterTextLbl.Visible = SHOW_CENTER_TEXT
     CenterTextLbl.ZIndex = 2
-    
     local CenterTextStrk = Instance.new("UIStroke", CenterTextLbl)
     CenterTextStrk.Color = Color3.fromRGB(0, 0, 0)
     CenterTextStrk.Thickness = 2
     CenterTextStrk.Transparency = 0.5
+
+    -- ฟังก์ชันแยกตัวอักษรภาษาไทยเพื่อป้องกันสระลอย/บั๊กเวลาพิมพ์ดีด
+    local function getGraphemes(str)
+        local graphemes = {}
+        for first, last in utf8.graphemes(str) do
+            table.insert(graphemes, string.sub(str, first, last))
+        end
+        return graphemes
+    end
+
+    -- Typewriter System
+    if SHOW_CENTER_TEXT and #CENTER_TEXT_DATA > 0 then
+        task.spawn(function()
+            while true do
+                for _, str in ipairs(CENTER_TEXT_DATA) do
+                    local graphemes = getGraphemes(str)
+                    local currentText = ""
+                    -- Type Forward
+                    for i = 1, #graphemes do
+                        currentText = currentText .. graphemes[i]
+                        CenterTextLbl.Text = currentText
+                        task.wait(TYPE_SPEED)
+                    end
+                    task.wait(PAUSE_TIME)
+                    
+                    -- Type Backward (ลบข้อความ)
+                    if #CENTER_TEXT_DATA > 1 then
+                        for i = #graphemes, 1, -1 do
+                            currentText = ""
+                            for j = 1, i - 1 do
+                                currentText = currentText .. graphemes[j]
+                            end
+                            CenterTextLbl.Text = currentText
+                            task.wait(TYPE_SPEED / 2)
+                        end
+                        task.wait(0.5)
+                    end
+                end
+                if #CENTER_TEXT_DATA == 1 then break end -- หยุดลูปถ้ามีข้อความเดียว
+            end
+        end)
+    end
 
     -- ======================================================
     -- ⚙️ CORE SYSTEMS
@@ -162,7 +205,6 @@ return function(Config)
             local tw = TS:Create(MainScale, ti, {Scale = 0})
             tw:Play()
             tw.Completed:Connect(function() if not uiOpen then Main.Visible = false end end)
-            
             camera.CameraType = Enum.CameraType.Custom
             clearPreview()
             clearHighlights()
@@ -208,7 +250,7 @@ return function(Config)
     local BigPreview = Instance.new("ImageLabel", Cont)
     BigPreview.Size = UDim2.new(0, 260, 0, 260)
     BigPreview.AnchorPoint = Vector2.new(0.5, 0.5)
-    BigPreview.Position = UDim2.new(0.25, 0, 0.45, 0) 
+    BigPreview.Position = UDim2.new(0.25, 0, 0.45, 0)
     BigPreview.BackgroundTransparency = 1
     BigPreview.ImageTransparency = 1 
     BigPreview.ScaleType = Enum.ScaleType.Fit
@@ -272,42 +314,81 @@ return function(Config)
                             data.Callback() 
                         end
                     end
+                    local char = p.Character
+                    if char then
+                        local prevFolder = char:FindFirstChild("PreviewEffects") or Instance.new("Folder", char)
+                        prevFolder.Name = "PreviewEffects"
+                        if data.Preview then
+                            if type(data.Preview) == "string" and data.Preview:match("^http") then
+                                local success, result = pcall(function() return loadstring(game:HttpGet(data.Preview))() end)
+                                if success and type(result) == "function" then result(char, prevFolder) end
+                            elseif type(data.Preview) == "function" then
+                                data.Preview(char, prevFolder)
+                            end
+                        end
+                    end
                 end)
             end
         end
     end
 
     -- ======================================================
-    -- ⚙️ SETTINGS PANEL 
+    -- ⚙️ SETTINGS PANEL (REBUILT FOR CLEAN UI)
     -- ======================================================
     local SetPnl = Instance.new("Frame", Main)
     SetPnl.Size, SetPnl.Position, SetPnl.BackgroundColor3 = UDim2.new(1,0,1,-35), UDim2.new(0,0,0,35), Color3.fromRGB(15,10,25)
     SetPnl.BackgroundTransparency, SetPnl.ZIndex, SetPnl.Visible, SetPnl.Active = 0.2, 100, false, true 
     
     local SetBox = Instance.new("Frame", SetPnl)
-    SetBox.Size, SetBox.AnchorPoint, SetBox.Position = UDim2.new(0,350,0,180), Vector2.new(0.5,0.5), UDim2.new(0.5,0,0.5,0)
-    SetBox.BackgroundColor3, SetBox.ZIndex, SetBox.Active = Color3.fromRGB(35,20,50), 101, true
-    Instance.new("UICorner", SetBox).CornerRadius = UDim.new(0,8)
+    SetBox.Size, SetBox.AnchorPoint, SetBox.Position = UDim2.new(0, 320, 0, 220), Vector2.new(0.5, 0.5), UDim2.new(0.5, 0, 0.5, 0)
+    SetBox.BackgroundColor3, SetBox.ZIndex, SetBox.Active = Color3.fromRGB(35, 20, 50), 101, true
+    Instance.new("UICorner", SetBox).CornerRadius = UDim.new(0, 8)
     local SetStrk = Instance.new("UIStroke", SetBox)
     SetStrk.Color, SetStrk.Thickness = C_BASE, 2
     
     local SetTitle = Instance.new("TextLabel", SetBox)
-    SetTitle.Size, SetTitle.Position, SetTitle.BackgroundTransparency, SetTitle.Text = UDim2.new(1,0,0,50), UDim2.new(0,0,0,0), 1, "SETTINGS"
-    SetTitle.TextColor3, SetTitle.Font, SetTitle.TextSize, SetTitle.ZIndex = Color3.fromRGB(255,255,255), C_FONT, 20, 102
+    SetTitle.Size, SetTitle.Position, SetTitle.BackgroundTransparency = UDim2.new(1, 0, 0, 45), UDim2.new(0, 0, 0, 0), 1
+    SetTitle.Text, SetTitle.TextColor3, SetTitle.Font, SetTitle.TextSize, SetTitle.ZIndex = "SETTINGS", Color3.fromRGB(255, 255, 255), C_FONT, 20, 102
     
     local SetClose = Instance.new("TextButton", SetBox)
-    SetClose.Size, SetClose.AnchorPoint, SetClose.Position, SetClose.BackgroundColor3 = UDim2.new(0,100,0,35), Vector2.new(0.5,1), UDim2.new(0.5,0,1,-15), C_ON
-    SetClose.Text, SetClose.TextColor3, SetClose.Font, SetClose.ZIndex = "Close", Color3.fromRGB(255,255,255), C_FONT, 102
-    Instance.new("UICorner", SetClose).CornerRadius = UDim.new(0,6)
+    SetClose.Size, SetClose.AnchorPoint, SetClose.Position, SetClose.BackgroundColor3 = UDim2.new(0, 120, 0, 35), Vector2.new(0.5, 1), UDim2.new(0.5, 0, 1, -15), C_ON
+    SetClose.Text, SetClose.TextColor3, SetClose.Font, SetClose.ZIndex = "Close", Color3.fromRGB(255, 255, 255), C_FONT, 102
+    Instance.new("UICorner", SetClose).CornerRadius = UDim.new(0, 6)
+
+    -- Container for Setting Items
+    local SetItems = Instance.new("Frame", SetBox)
+    SetItems.Size, SetItems.Position, SetItems.BackgroundTransparency = UDim2.new(1, -40, 1, -110), UDim2.new(0, 20, 0, 45), 1
+    SetItems.ZIndex = 102
     
-    local FontBtn = Instance.new("TextButton", SetBox)
-    FontBtn.Size, FontBtn.Position, FontBtn.BackgroundColor3 = UDim2.new(0,150,0,30), UDim2.new(0,170,0,70), Color3.fromRGB(50,35,75)
-    FontBtn.Text, FontBtn.TextColor3, FontBtn.Font, FontBtn.TextSize, FontBtn.ZIndex = C_FONT.Name, C_HL, C_FONT, 14, 102
-    Instance.new("UICorner", FontBtn).CornerRadius = UDim.new(0,4)
+    local SetLayout = Instance.new("UIListLayout", SetItems)
+    SetLayout.SortOrder, SetLayout.Padding = Enum.SortOrder.LayoutOrder, UDim.new(0, 12)
+    SetLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
+
+    -- ฟังก์ชันสร้าง Row การตั้งค่า
+    local function createSettingRow(titleText, inputElement)
+        local Row = Instance.new("Frame", SetItems)
+        Row.Size, Row.BackgroundTransparency = UDim2.new(1, 0, 0, 32), 1
+        
+        local Lbl = Instance.new("TextLabel", Row)
+        Lbl.Size, Lbl.Position, Lbl.BackgroundTransparency = UDim2.new(0.5, -5, 1, 0), UDim2.new(0, 0, 0, 0), 1
+        Lbl.Text, Lbl.TextColor3, Lbl.Font, Lbl.TextSize = titleText, Color3.fromRGB(220, 220, 220), C_FONT, 16
+        Lbl.TextXAlignment = Enum.TextXAlignment.Left
+        
+        inputElement.Parent = Row
+        inputElement.Size = UDim2.new(0.5, -5, 1, 0)
+        inputElement.Position = UDim2.new(0.5, 5, 0, 0)
+        inputElement.ZIndex = 103
+    end
+
+    -- Font Setting
+    local FontBtn = Instance.new("TextButton")
+    FontBtn.BackgroundColor3 = Color3.fromRGB(50, 35, 75)
+    FontBtn.Text, FontBtn.TextColor3, FontBtn.Font, FontBtn.TextSize = C_FONT.Name, C_HL, C_FONT, 14
+    Instance.new("UICorner", FontBtn).CornerRadius = UDim.new(0, 4)
+    createSettingRow("Font Style", FontBtn)
     
     local FontList = {Enum.Font.GothamMedium, Enum.Font.Roboto, Enum.Font.Ubuntu, Enum.Font.SciFi, Enum.Font.Arcade, Enum.Font.Code}
     local fIdx = 1
-
     FontBtn.MouseButton1Click:Connect(function()
         fIdx = (fIdx % #FontList) + 1
         local newFont = FontList[fIdx]
@@ -317,14 +398,15 @@ return function(Config)
         end
     end)
 
-    local KeyBtn = Instance.new("TextButton", SetBox)
-    KeyBtn.Size, KeyBtn.Position, KeyBtn.BackgroundColor3 = UDim2.new(0,150,0,30), UDim2.new(0,170,0,115), Color3.fromRGB(50,35,75)
-    KeyBtn.Text, KeyBtn.TextColor3, KeyBtn.Font, KeyBtn.TextSize, KeyBtn.ZIndex = TOGGLE_KEY.Name, C_HL, C_FONT, 14, 102
-    Instance.new("UICorner", KeyBtn).CornerRadius = UDim.new(0,4)
+    -- Keybind Setting
+    local KeyBtn = Instance.new("TextButton")
+    KeyBtn.BackgroundColor3 = Color3.fromRGB(50, 35, 75)
+    KeyBtn.Text, KeyBtn.TextColor3, KeyBtn.Font, KeyBtn.TextSize = TOGGLE_KEY.Name, C_HL, C_FONT, 14
+    Instance.new("UICorner", KeyBtn).CornerRadius = UDim.new(0, 4)
+    createSettingRow("Toggle Key", KeyBtn)
 
     local isBinding = false
-    KeyBtn.MouseButton1Click:Connect(function() isBinding = true KeyBtn.Text = "... Press Any Key ..." end)
-
+    KeyBtn.MouseButton1Click:Connect(function() isBinding = true KeyBtn.Text = "... Press Key ..." end)
     UIS.InputBegan:Connect(function(inp, gpe)
         if isBinding and inp.UserInputType == Enum.UserInputType.Keyboard then
             TOGGLE_KEY, KeyBtn.Text, isBinding = inp.KeyCode, inp.KeyCode.Name, false
@@ -362,11 +444,10 @@ return function(Config)
         lbl.TextColor3, lbl.Font, lbl.TextSize, lbl.ZIndex = Color3.fromRGB(255,255,255), C_FONT, 11, 8
 
         btn.MouseButton1Click:Connect(function()
-            -- ซ่อน Center Text ด้วย Animation เฟดออก
+            -- ซ่อน Center Text
             TS:Create(CenterTextLbl, ti, {TextTransparency = 1}):Play()
             TS:Create(CenterTextStrk, ti, {Transparency = 1}):Play()
             
-            -- แสดง Panel เมื่อกดโฟกัส
             HBox.Visible = true
             RPane.Visible = true
 
@@ -401,7 +482,7 @@ return function(Config)
     end
 
     -- ======================================================
-    -- 🔙 ZOOM OUT LOGIC (กดพื้นที่ว่าง)
+    -- 🔙 ZOOM OUT LOGIC 
     -- ======================================================
     local function performZoomOut()
         local tw = TS:Create(RPane, ti, {Position = UDim2.new(1.5, 0, 0.45, 0)})
@@ -412,7 +493,6 @@ return function(Config)
         TS:Create(CenterTextLbl, ti, {TextTransparency = 0}):Play()
         TS:Create(CenterTextStrk, ti, {Transparency = 0.5}):Play()
         
-        -- ซ่อน Big Preview 
         TS:Create(BigPreview, ti, {ImageTransparency = 1}):Play()
         
         tw.Completed:Connect(function()
