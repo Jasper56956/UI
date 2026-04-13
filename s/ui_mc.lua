@@ -5,7 +5,7 @@
     ██║     ██║   ██║██╔══██║    ██╔══██║██║     ██║     
     ███████╗╚██████╔╝██║  ██║    ██║  ██║███████╗███████╗
     ╚══════╝ ╚═════╝ ╚═╝  ╚═╝    ╚═╝  ╚═╝╚══════╝╚══════╝
-    Library V7: Center Animated Title & Removed Hover Info
+    Library V8: Animated Center Text & Removed Hover Panel
 ]=]
 
 local P = game:GetService("Players")
@@ -28,10 +28,9 @@ return function(Config)
     local C_FONT = Config.Font or Enum.Font.GothamMedium
     local INFO_TITLE = Config.InfoTitle or "SYSTEM INFO"
     
-    -- 🌟 ตั้งค่า CENTER TITLE 🌟
-    local CENTER_TITLE = Config.CenterTitle or "🔥 SHADOW VFX HUB 🔥"
-    local CENTER_ANIM = Config.CenterAnimType or "Float" -- "Float", "Pulse", "Rainbow", "None"
-    local CENTER_SPEED = Config.CenterAnimSpeed or 3
+    -- 🟢 ตั้งค่าข้อความแอนิเมชันตรงกลาง (รับค่าจาก Main)
+    local CENTER_TEXT = Config.CenterText or "✨ Welcome to Shadow VFX Hub ✨"
+    local SHOW_CENTER_TEXT = Config.ShowCenterText == nil and true or Config.ShowCenterText
     
     local TAB_BOXES = Config.TabBoxes or {}
     
@@ -136,25 +135,6 @@ return function(Config)
     Grid.Size, Grid.BackgroundTransparency, Grid.Image, Grid.ImageColor3, Grid.ImageTransparency = UDim2.new(1,0,1,0), 1, BG_IMAGE, Color3.fromRGB(200,100,255), 0.8
     Grid.ScaleType, Grid.TileSize = Enum.ScaleType.Tile, UDim2.new(0,50,0,50)
 
-    -- 🌟 [[ CENTER TITLE GUI ]] 🌟
-    local CenterLbl = Instance.new("TextLabel", Cont)
-    CenterLbl.AnchorPoint = Vector2.new(0.5, 0.5)
-    CenterLbl.Position = UDim2.new(0.5, 0, 0.2, 0)
-    CenterLbl.Size = UDim2.new(0, 500, 0, 50)
-    CenterLbl.BackgroundTransparency = 1
-    CenterLbl.Text = CENTER_TITLE
-    CenterLbl.TextColor3 = Color3.fromRGB(255, 255, 255)
-    CenterLbl.Font = Enum.Font.GothamBold
-    CenterLbl.TextSize = 28
-    CenterLbl.ZIndex = 4
-    
-    local CenterStrk = Instance.new("UIStroke", CenterLbl)
-    CenterStrk.Thickness = 2
-    CenterStrk.Color = C_BASE
-    
-    local CenterScale = Instance.new("UIScale", CenterLbl)
-    CenterScale.Scale = 1
-
     -- [[ VIEWPORT (HOLOGRAM) ]]
     local VP = Instance.new("ViewportFrame", Cont)
     VP.AnchorPoint, VP.Position, VP.Size, VP.BackgroundTransparency = Vector2.new(0.5,0.5), UDim2.new(0.5,0,0.45,0), UDim2.new(0,300,0,400), 1
@@ -164,6 +144,67 @@ return function(Config)
     local WM = Instance.new("WorldModel", VP)
     local Cam = Instance.new("Camera", VP)
     VP.CurrentCamera = Cam
+
+    -- ======================================================
+    -- 🌟 CENTER ANIMATED TEXT (ตรงที่วงกลมสีแดง)
+    -- ======================================================
+    local CenterAnimText = Instance.new("TextLabel", Cont)
+    CenterAnimText.AnchorPoint = Vector2.new(0.5, 0.5)
+    CenterAnimText.Position = UDim2.new(0.5, 0, 0.2, 0) -- ตำแหน่งด้านบนตรงกลาง
+    CenterAnimText.Size = UDim2.new(0.8, 0, 0, 40)
+    CenterAnimText.BackgroundTransparency = 1
+    CenterAnimText.Font = C_FONT
+    CenterAnimText.Text = "" 
+    CenterAnimText.TextColor3 = C_HL
+    CenterAnimText.TextSize = 28
+    CenterAnimText.Visible = SHOW_CENTER_TEXT
+    CenterAnimText.ZIndex = 4
+    
+    local CStrk = Instance.new("UIStroke", CenterAnimText)
+    CStrk.Thickness = 2
+    CStrk.Color = Color3.fromRGB(0, 0, 0)
+    CStrk.Transparency = 0.3
+
+    if SHOW_CENTER_TEXT and CENTER_TEXT ~= "" then
+        task.spawn(function()
+            local basePos = UDim2.new(0.5, 0, 0.2, 0)
+            local tickCount = 0
+            
+            -- อนิเมชันลอยขึ้นลง
+            RS.RenderStepped:Connect(function()
+                if CenterAnimText.Parent then
+                    tickCount = tickCount + 0.05
+                    CenterAnimText.Position = basePos + UDim2.new(0, 0, 0, math.sin(tickCount) * 5)
+                end
+            end)
+            
+            -- อนิเมชันพิมพ์ดีด
+            while task.wait() do
+                if not CenterAnimText.Parent then break end
+                local length = utf8.len(CENTER_TEXT) or #CENTER_TEXT
+                
+                -- พิมพ์เข้า
+                for i = 1, length do
+                    if not CenterAnimText.Parent then break end
+                    local offset = utf8.offset(CENTER_TEXT, i)
+                    if offset then CenterAnimText.Text = string.sub(CENTER_TEXT, 1, offset) end
+                    task.wait(0.05)
+                end
+                
+                task.wait(3) -- ค้างไว้ 3 วินาที
+                
+                -- ลบออก
+                for i = length, 1, -1 do
+                    if not CenterAnimText.Parent then break end
+                    local offset = utf8.offset(CENTER_TEXT, i)
+                    if offset then CenterAnimText.Text = string.sub(CENTER_TEXT, 1, offset) end
+                    task.wait(0.02)
+                end
+                
+                task.wait(0.5)
+            end
+        end)
+    end
 
     -- [[ RIGHT PANEL (BOXES) ]]
     local RPane = Instance.new("Frame", Cont)
@@ -228,7 +269,7 @@ return function(Config)
                     
                     local char = WM:FindFirstChild(p.Name)
                     if char and char:FindFirstChild("PreviewEffects") then
-                        char.PreviewEffects:ClearAllChildren()
+                        char.PreviewEffects:ClearAllChildren() 
                         
                         if data.Preview then
                             if type(data.Preview) == "string" and data.Preview:match("^http") then
@@ -326,10 +367,9 @@ return function(Config)
     SettingsBtn.MouseButton1Click:Connect(function() SetPnl.Visible = true end)
     SetClose.MouseButton1Click:Connect(function() SetPnl.Visible = false end)
 
-    -- [[ CHARACTER SETUP & ANIMATION ]]
+    -- [[ CHARACTER SETUP ]]
     local BASE_CF = CFrame.new(Vector3.new(0, 0.5, -6.5), Vector3.new(0, 0.5, 0))
     local isIdle, rotAngle, Y_OFF, isPanelOpen = true, 0, 0.5, false
-    local animTick = 0
 
     local function getPts(tabData)
         local lst, char = {}, WM:FindFirstChild(p.Name)
@@ -352,7 +392,6 @@ return function(Config)
                 if pt:IsA("BasePart") and pt.Name ~= "HumanoidRootPart" then pt.Color, pt.Material, pt.Transparency = C_BASE, Enum.Material.ForceField, 0
                 elseif pt:IsA("Shirt") or pt:IsA("Pants") or pt:IsA("Decal") then pt:Destroy() end
             end
-            
             local prevFolder = Instance.new("Folder", cl)
             prevFolder.Name = "PreviewEffects"
         end
@@ -362,17 +401,6 @@ return function(Config)
     setupChar()
 
     RS.RenderStepped:Connect(function(dt)
-        -- 🌟 อนิเมชั่นข้อความชื่อ Hub 🌟
-        animTick = animTick + (dt * CENTER_SPEED)
-        if CENTER_ANIM == "Float" then
-            CenterLbl.Position = UDim2.new(0.5, 0, 0.2, math.sin(animTick) * 5)
-        elseif CENTER_ANIM == "Pulse" then
-            CenterScale.Scale = 1 + (math.sin(animTick) * 0.05)
-        elseif CENTER_ANIM == "Rainbow" then
-            CenterLbl.TextColor3 = Color3.fromHSV(animTick % 1, 0.7, 1)
-        end
-
-        -- อนิเมชั่นตัวละครหมุน
         if isIdle then
             local char = WM:FindFirstChild(p.Name)
             if char and char:FindFirstChild("HumanoidRootPart") then
@@ -414,13 +442,13 @@ return function(Config)
             
             RenderBoxes(TAB_BOXES[tabData.id] or {})
 
-            -- ซ่อนชื่อ Hub ตอนเปิดเมนูย่อย
-            TS:Create(CenterLbl, ti, {TextTransparency = 1}):Play()
-            TS:Create(CenterStrk, ti, {Transparency = 1}):Play()
-
             TS:Create(VP, ti, {Position = UDim2.new(0.25, 0, 0.45, 0)}):Play()
             TS:Create(HBox, ti, {Position = UDim2.new(0.25, 0, 0.45, 0)}):Play()
             TS:Create(RPane, ti, {Position = UDim2.new(0.97, 0, 0.45, 0)}):Play()
+            
+            -- ซ่อน Text ตรงกลางเมื่อเปิดกล่องเมนูด้านข้าง
+            TS:Create(CenterAnimText, TweenInfo.new(0.3), {TextTransparency = 1}):Play()
+            TS:Create(CStrk, TweenInfo.new(0.3), {Transparency = 1}):Play()
 
             local char = WM:FindFirstChild(p.Name)
             if not char or not char:FindFirstChild("HumanoidRootPart") then return end
@@ -455,14 +483,14 @@ return function(Config)
 
     HBox.MouseButton1Click:Connect(function()
         isPanelOpen = false
-        
-        -- โชว์ชื่อ Hub กลับมาตอนซูมออก
-        TS:Create(CenterLbl, ti, {TextTransparency = 0}):Play()
-        TS:Create(CenterStrk, ti, {Transparency = 0}):Play()
-
         TS:Create(VP, ti, {Position = UDim2.new(0.5, 0, 0.45, 0)}):Play()
         TS:Create(HBox, ti, {Position = UDim2.new(0.5, 0, 0.45, 0)}):Play()
         TS:Create(RPane, ti, {Position = UDim2.new(1.5, 0, 0.45, 0)}):Play()
+        
+        -- โชว์ Text ตรงกลางอีกครั้งตอนปิดแผงด้านข้าง
+        TS:Create(CenterAnimText, TweenInfo.new(0.3), {TextTransparency = 0}):Play()
+        TS:Create(CStrk, TweenInfo.new(0.3), {Transparency = 0.3}):Play()
+        
         TS:Create(Cam, ti, {CFrame = BASE_CF}):Play()
         local char = WM:FindFirstChild(p.Name)
         if char and char:FindFirstChild("HumanoidRootPart") then
