@@ -5,7 +5,7 @@
     ██║     ██║   ██║██╔══██║    ██╔══██║██║     ██║     
     ███████╗╚██████╔╝██║  ██║    ██║  ██║███████╗███████╗
     ╚══════╝ ╚═════╝ ╚═╝  ╚═╝    ╚═╝  ╚═╝╚══════╝╚══════╝
-    Library V26: Toggle Off Zooms Camera Back to Whole Body
+    Library V27: Camera unlocks when clicking item boxes
 ]=]
 
 local P = game:GetService("Players")
@@ -160,7 +160,7 @@ return function(Config)
     Cont.Visible = true
 
     -- ======================================================
-    -- 🚀 START SCREEN (Typewriter + Button)
+    -- 🚀 START SCREEN 
     -- ======================================================
     local StartGroup = Instance.new("CanvasGroup", Cont)
     StartGroup.Size, StartGroup.Position = UDim2.new(1, 0, 1, 0), UDim2.new(0, 0, 0, 0)
@@ -277,7 +277,7 @@ return function(Config)
     end)
 
     -- ======================================================
-    -- 🖼️ LEFT PANEL (กรอบฝั่งซ้าย + Big Preview)
+    -- 🖼️ LEFT PANEL
     -- ======================================================
     local LeftPanel = Instance.new("Frame", Cont)
     LeftPanel.Position, LeftPanel.Size = UDim2.new(0, 20, 0, 20), UDim2.new(0, 320, 0, 425)
@@ -355,6 +355,10 @@ return function(Config)
 
                 img.MouseButton1Click:Connect(function()
                     clearPreview()
+                    
+                    -- 🔓 ปลดล็อคกล้องเมื่อผู้ใช้กดคลิกที่ Box ของ Zone
+                    camera.CameraType = Enum.CameraType.Custom
+                    
                     if data.Callback then 
                         if type(data.Callback) == "string" and data.Callback:match("^http") then
                             loadstring(game:HttpGet(data.Callback))()
@@ -381,7 +385,7 @@ return function(Config)
     end
 
     -- ======================================================
-    -- 🌟 BOTTOM TABS UX (UNDER ZONE)
+    -- 🌟 BOTTOM TABS UX 
     -- ======================================================
     local SlotP = Instance.new("Frame", Cont)
     SlotP.AnchorPoint, SlotP.Position = Vector2.new(1, 0), UDim2.new(1, -20, 0, 385)
@@ -407,7 +411,6 @@ return function(Config)
         RPane.Visible = true
         SlotP.Visible = true
 
-        -- ตั้งค่าเริ่มแรกให้โชว์หน้า "ทั้งตัว"
         currentFocusedTab = "All"
         RTit.Text = "Zone: Whole Body"
         RenderBoxes(TAB_BOXES["All"] or {})
@@ -443,7 +446,6 @@ return function(Config)
             local char = p.Character
             if not char or not char:FindFirstChild("HumanoidRootPart") then return end
 
-            -- 🛑 ถ้ายกเลิกโฟกัส ให้กลับไปหน้า Whole Body เหมือนเดิม พร้อมซูมกล้องถอยออกมา
             if currentFocusedTab == tabData.id then
                 currentFocusedTab = "All"
                 RTit.Text = "Zone: Whole Body"
@@ -454,7 +456,6 @@ return function(Config)
                 local camPos = fp.CFrame * CFrame.new(-3, 1, -8)
                 TS:Create(camera, ti, {CFrame = CFrame.lookAt(camPos.Position, fp.Position)}):Play()
             else
-                -- 🟢 ถ้าโฟกัสส่วนที่ระบุ
                 currentFocusedTab = tabData.id
                 RTit.Text = "Zone: " .. tabData.n
                 RenderBoxes(TAB_BOXES[tabData.id] or {})
