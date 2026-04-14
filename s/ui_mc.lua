@@ -5,7 +5,7 @@
     ██║     ██║   ██║██╔══██║    ██╔══██║██║     ██║     
     ███████╗╚██████╔╝██║  ██║    ██║  ██║███████╗███████╗
     ╚══════╝ ╚═════╝ ╚═╝  ╚═╝    ╚═╝  ╚═╝╚══════╝╚══════╝
-    Library V24: String-based Configuration Supported
+    Library V25: Big Preview Added Back + Default "Whole Body" Zone
 ]=]
 
 local P = game:GetService("Players")
@@ -15,19 +15,17 @@ local UIS = game:GetService("UserInputService")
 local WS = game:GetService("Workspace")
 
 -- ======================================================
--- 🛠️ HELPER FUNCTIONS (สำหรับแปลง String เป็นค่าต่างๆ)
+-- 🛠️ HELPER FUNCTIONS (String Parser)
 -- ======================================================
 local function ParseColor(val, defaultColor)
     if typeof(val) == "Color3" then return val end
     if type(val) == "string" then
-        if val:sub(1,1) == "#" then -- รองรับ Hex (เช่น "#A050FF")
+        if val:sub(1,1) == "#" then
             local success, color = pcall(function() return Color3.fromHex(val) end)
             if success then return color end
         end
-        local r, g, b = val:match("(%d+)%s*,%s*(%d+)%s*,%s*(%d+)") -- รองรับ RGB (เช่น "160, 80, 255")
-        if r and g and b then
-            return Color3.fromRGB(tonumber(r), tonumber(g), tonumber(b))
-        end
+        local r, g, b = val:match("(%d+)%s*,%s*(%d+)%s*,%s*(%d+)")
+        if r and g and b then return Color3.fromRGB(tonumber(r), tonumber(g), tonumber(b)) end
     end
     return defaultColor
 end
@@ -79,7 +77,6 @@ return function(Config)
     local CENTER_TEXT_FONT = ParseFont(Config.CenterTextFont, Enum.Font.FredokaOne)
     local TYPE_SPEED = tonumber(Config.TypingSpeed) or 0.05
     local PAUSE_TIME = tonumber(Config.PauseTime) or 2.5
-    local SHOW_CENTER_TEXT = ParseBool(Config.ShowCenterText, false)
     
     local TAB_BOXES = Config.TabBoxes or {}
     
@@ -280,7 +277,7 @@ return function(Config)
     end)
 
     -- ======================================================
-    -- 🖼️ LEFT PANEL (กรอบฝั่งซ้าย)
+    -- 🖼️ LEFT PANEL (กรอบฝั่งซ้าย + Big Preview)
     -- ======================================================
     local LeftPanel = Instance.new("Frame", Cont)
     LeftPanel.Position, LeftPanel.Size = UDim2.new(0, 20, 0, 20), UDim2.new(0, 320, 0, 425)
@@ -290,8 +287,15 @@ return function(Config)
     LStrk.Color, LStrk.Transparency, LStrk.Thickness = C_BASE, 0.5, 1.5
     LeftPanel.Visible = false 
 
+    -- เพิ่ม Big Preview กลับเข้ามา
+    local BigPreview = Instance.new("ImageLabel", LeftPanel)
+    BigPreview.Size, BigPreview.Position, BigPreview.AnchorPoint = UDim2.new(1, -20, 1, -20), UDim2.new(0.5, 0.5), Vector2.new(0.5, 0.5)
+    BigPreview.BackgroundTransparency = 1
+    BigPreview.ImageTransparency = 1
+    BigPreview.ScaleType = Enum.ScaleType.Fit
+
     -- ======================================================
-    -- 📁 ZONE TAB (RIGHT SIDE)
+    -- 📁 ZONE TAB (RIGHT SIDE - ALWAYS VISIBLE AFTER START)
     -- ======================================================
     local RPane = Instance.new("Frame", Cont)
     RPane.AnchorPoint, RPane.Position, RPane.Size = Vector2.new(1, 0), UDim2.new(1, -20, 0, 20), UDim2.new(0, 420, 0, 350)
@@ -341,6 +345,16 @@ return function(Config)
                 img.Size, img.BackgroundTransparency, img.Position, img.AnchorPoint = UDim2.new(1, -10, 1, -10), 1, UDim2.new(0.5, 0, 0.5, 0), Vector2.new(0.5, 0.5)
                 img.Image = data.Image
 
+                -- แสดงพรีวิวรูปใหญ่เมื่อเอาเมาส์ชี้
+                img.MouseEnter:Connect(function()
+                    BigPreview.Image = data.Image
+                    TS:Create(BigPreview, TweenInfo.new(0.2), {ImageTransparency = 0}):Play()
+                end)
+                
+                img.MouseLeave:Connect(function()
+                    TS:Create(BigPreview, TweenInfo.new(0.2), {ImageTransparency = 1}):Play()
+                end)
+
                 img.MouseButton1Click:Connect(function()
                     clearPreview()
                     if data.Callback then 
@@ -382,6 +396,9 @@ return function(Config)
     local LLo = Instance.new("UIListLayout", SlotP)
     LLo.FillDirection, LLo.Padding, LLo.HorizontalAlignment, LLo.VerticalAlignment = Enum.FillDirection.Horizontal, UDim.new(0, 6), Enum.HorizontalAlignment.Center, Enum.VerticalAlignment.Center
 
+    local currentFocusedTab = nil
+
+    -- ฟังก์ชันปุ่ม Start
     StartBtn.MouseButton1Click:Connect(function()
         if isStarted then return end
         isStarted = true
@@ -393,12 +410,25 @@ return function(Config)
         RPane.Visible = true
         SlotP.Visible = true
 
+        -- [NEW] โหลดโซน "ทั้งตัว" เป็นค่าเริ่มต้นเมื่อกดเริ่ม
+        currentFocusedTab = "All"
+        RTit.Text = "Zone: Whole Body"
+        RenderBoxes(TAB_BOXES["All"] or {})
+
+        -- ซูมกล้องเพื่อให้เห็นทั้งตัว (ตั้งค่ากล้องเริ่มต้น)
+        local char = p.Character
+        if char and char:FindFirstChild("HumanoidRootPart") then
+            camera.CameraType = Enum.CameraType.Scriptable
+            clearHighlights()
+            local fp = char.HumanoidRootPart
+            local camPos = fp.CFrame * CFrame.new(-3, 1, -8) -- ถอยระยะให้เห็นทั้งตัว
+            TS:Create(camera, ti, {CFrame = CFrame.lookAt(camPos.Position, fp.Position)}):Play()
+        end
+
         fadeOut.Completed:Connect(function()
             StartGroup.Visible = false
         end)
     end)
-
-    local currentFocusedTab = nil
 
     for _, tabData in ipairs(FIXED_TABS) do
         local btn = Instance.new("TextButton", SlotP)
@@ -417,10 +447,13 @@ return function(Config)
             local char = p.Character
             if not char or not char:FindFirstChild("HumanoidRootPart") then return end
 
+            -- 🛑 ถ้ายกเลิกโฟกัส ให้กลับไปหน้า Whole Body เหมือนเดิม
             if currentFocusedTab == tabData.id then
-                currentFocusedTab = nil
+                currentFocusedTab = "All"
+                RTit.Text = "Zone: Whole Body"
+                RenderBoxes(TAB_BOXES["All"] or {})
                 clearHighlights()
-                camera.CameraType = Enum.CameraType.Custom 
+                camera.CameraType = Enum.CameraType.Custom -- คืนการควบคุมกล้อง
             else
                 currentFocusedTab = tabData.id
                 RTit.Text = "Zone: " .. tabData.n
