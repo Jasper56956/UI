@@ -5,7 +5,7 @@
     ██║     ██║   ██║██╔══██║    ██╔══██║██║     ██║     
     ███████╗╚██████╔╝██║  ██║    ██║  ██║███████╗███████╗
     ╚══════╝ ╚═════╝ ╚═╝  ╚═╝    ╚═╝  ╚═╝╚══════╝╚══════╝
-    Library V25: Big Preview Added Back + Default "Whole Body" Zone
+    Library V26: Toggle Off Zooms Camera Back to Whole Body
 ]=]
 
 local P = game:GetService("Players")
@@ -287,7 +287,6 @@ return function(Config)
     LStrk.Color, LStrk.Transparency, LStrk.Thickness = C_BASE, 0.5, 1.5
     LeftPanel.Visible = false 
 
-    -- เพิ่ม Big Preview กลับเข้ามา
     local BigPreview = Instance.new("ImageLabel", LeftPanel)
     BigPreview.Size, BigPreview.Position, BigPreview.AnchorPoint = UDim2.new(1, -20, 1, -20), UDim2.new(0.5, 0.5), Vector2.new(0.5, 0.5)
     BigPreview.BackgroundTransparency = 1
@@ -295,7 +294,7 @@ return function(Config)
     BigPreview.ScaleType = Enum.ScaleType.Fit
 
     -- ======================================================
-    -- 📁 ZONE TAB (RIGHT SIDE - ALWAYS VISIBLE AFTER START)
+    -- 📁 ZONE TAB (RIGHT SIDE)
     -- ======================================================
     local RPane = Instance.new("Frame", Cont)
     RPane.AnchorPoint, RPane.Position, RPane.Size = Vector2.new(1, 0), UDim2.new(1, -20, 0, 20), UDim2.new(0, 420, 0, 350)
@@ -345,7 +344,6 @@ return function(Config)
                 img.Size, img.BackgroundTransparency, img.Position, img.AnchorPoint = UDim2.new(1, -10, 1, -10), 1, UDim2.new(0.5, 0, 0.5, 0), Vector2.new(0.5, 0.5)
                 img.Image = data.Image
 
-                -- แสดงพรีวิวรูปใหญ่เมื่อเอาเมาส์ชี้
                 img.MouseEnter:Connect(function()
                     BigPreview.Image = data.Image
                     TS:Create(BigPreview, TweenInfo.new(0.2), {ImageTransparency = 0}):Play()
@@ -398,7 +396,6 @@ return function(Config)
 
     local currentFocusedTab = nil
 
-    -- ฟังก์ชันปุ่ม Start
     StartBtn.MouseButton1Click:Connect(function()
         if isStarted then return end
         isStarted = true
@@ -410,18 +407,17 @@ return function(Config)
         RPane.Visible = true
         SlotP.Visible = true
 
-        -- [NEW] โหลดโซน "ทั้งตัว" เป็นค่าเริ่มต้นเมื่อกดเริ่ม
+        -- ตั้งค่าเริ่มแรกให้โชว์หน้า "ทั้งตัว"
         currentFocusedTab = "All"
         RTit.Text = "Zone: Whole Body"
         RenderBoxes(TAB_BOXES["All"] or {})
 
-        -- ซูมกล้องเพื่อให้เห็นทั้งตัว (ตั้งค่ากล้องเริ่มต้น)
         local char = p.Character
         if char and char:FindFirstChild("HumanoidRootPart") then
             camera.CameraType = Enum.CameraType.Scriptable
             clearHighlights()
             local fp = char.HumanoidRootPart
-            local camPos = fp.CFrame * CFrame.new(-3, 1, -8) -- ถอยระยะให้เห็นทั้งตัว
+            local camPos = fp.CFrame * CFrame.new(-3, 1, -8)
             TS:Create(camera, ti, {CFrame = CFrame.lookAt(camPos.Position, fp.Position)}):Play()
         end
 
@@ -447,14 +443,18 @@ return function(Config)
             local char = p.Character
             if not char or not char:FindFirstChild("HumanoidRootPart") then return end
 
-            -- 🛑 ถ้ายกเลิกโฟกัส ให้กลับไปหน้า Whole Body เหมือนเดิม
+            -- 🛑 ถ้ายกเลิกโฟกัส ให้กลับไปหน้า Whole Body เหมือนเดิม พร้อมซูมกล้องถอยออกมา
             if currentFocusedTab == tabData.id then
                 currentFocusedTab = "All"
                 RTit.Text = "Zone: Whole Body"
                 RenderBoxes(TAB_BOXES["All"] or {})
                 clearHighlights()
-                camera.CameraType = Enum.CameraType.Custom -- คืนการควบคุมกล้อง
+                
+                local fp = char.HumanoidRootPart
+                local camPos = fp.CFrame * CFrame.new(-3, 1, -8)
+                TS:Create(camera, ti, {CFrame = CFrame.lookAt(camPos.Position, fp.Position)}):Play()
             else
+                -- 🟢 ถ้าโฟกัสส่วนที่ระบุ
                 currentFocusedTab = tabData.id
                 RTit.Text = "Zone: " .. tabData.n
                 RenderBoxes(TAB_BOXES[tabData.id] or {})
