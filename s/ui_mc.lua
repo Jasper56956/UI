@@ -5,7 +5,7 @@
     ██║     ██║   ██║██╔══██║    ██╔══██║██║     ██║     
     ███████╗╚██████╔╝██║  ██║    ██║  ██║███████╗███████╗
     ╚══════╝ ╚═════╝ ╚═╝  ╚═╝    ╚═╝  ╚═╝╚══════╝╚══════╝
-    Library V23: Start Screen First, Persistent Zone Tab, Toggle Focus
+    Library V24: String-based Configuration Supported
 ]=]
 
 local P = game:GetService("Players")
@@ -14,29 +14,72 @@ local RS = game:GetService("RunService")
 local UIS = game:GetService("UserInputService")
 local WS = game:GetService("Workspace")
 
+-- ======================================================
+-- 🛠️ HELPER FUNCTIONS (สำหรับแปลง String เป็นค่าต่างๆ)
+-- ======================================================
+local function ParseColor(val, defaultColor)
+    if typeof(val) == "Color3" then return val end
+    if type(val) == "string" then
+        if val:sub(1,1) == "#" then -- รองรับ Hex (เช่น "#A050FF")
+            local success, color = pcall(function() return Color3.fromHex(val) end)
+            if success then return color end
+        end
+        local r, g, b = val:match("(%d+)%s*,%s*(%d+)%s*,%s*(%d+)") -- รองรับ RGB (เช่น "160, 80, 255")
+        if r and g and b then
+            return Color3.fromRGB(tonumber(r), tonumber(g), tonumber(b))
+        end
+    end
+    return defaultColor
+end
+
+local function ParseFont(val, defaultFont)
+    if typeof(val) == "EnumItem" then return val end
+    if type(val) == "string" then
+        local success, font = pcall(function() return Enum.Font[val] end)
+        if success then return font end
+    end
+    return defaultFont
+end
+
+local function ParseKey(val, defaultKey)
+    if typeof(val) == "EnumItem" then return val end
+    if type(val) == "string" then
+        local success, key = pcall(function() return Enum.KeyCode[val] end)
+        if success then return key end
+    end
+    return defaultKey
+end
+
+local function ParseBool(val, defaultBool)
+    if type(val) == "boolean" then return val end
+    if type(val) == "string" then return val:lower() == "true" end
+    if val == nil then return defaultBool end
+    return defaultBool
+end
+
 return function(Config)
     Config = Config or {}
 
     -- [[ ⚙️ CONFIGURATION VARIABLES ]]
     local UI_TITLE = Config.Title or "Hub"
-    local C_BASE = Config.BaseColor or Color3.fromRGB(160, 80, 255)     
-    local C_HL = Config.HighlightColor or Color3.fromRGB(100, 255, 255) 
-    local C_ON = Config.ButtonColor or Color3.fromRGB(100, 70, 150)
+    local C_BASE = ParseColor(Config.BaseColor, Color3.fromRGB(160, 80, 255))
+    local C_HL = ParseColor(Config.HighlightColor, Color3.fromRGB(100, 255, 255))
+    local C_ON = ParseColor(Config.ButtonColor, Color3.fromRGB(100, 70, 150))
+    local C_BG = ParseColor(Config.BackgroundColor, Color3.fromRGB(30, 15, 45))
+    local BG_TRANS = tonumber(Config.BackgroundTransparency) or 0.2
     
-    local C_BG = Config.BackgroundColor or Color3.fromRGB(30, 15, 45)
-    local BG_TRANS = Config.BackgroundTransparency or 0.2
-    
-    local TOGGLE_KEY = Config.ToggleKey or Enum.KeyCode.RightControl
-    local C_FONT = Config.Font or Enum.Font.GothamMedium
+    local TOGGLE_KEY = ParseKey(Config.ToggleKey, Enum.KeyCode.RightControl)
+    local C_FONT = ParseFont(Config.Font, Enum.Font.GothamMedium)
     local INFO_TITLE = Config.InfoTitle or "Zone:"
     
     -- 🌟 Center Text Typewriter Config
     local CENTER_TEXT_DATA = Config.CenterText or {"ยินดีต้อนรับสู่ระบบ!", "คลิกที่ปุ่มด้านล่างเพื่อเริ่มต้นใช้งาน"}
     if type(CENTER_TEXT_DATA) == "string" then CENTER_TEXT_DATA = {CENTER_TEXT_DATA} end
-    local CENTER_TEXT_SIZE = Config.CenterTextSize or 32
-    local CENTER_TEXT_FONT = Config.CenterTextFont or Enum.Font.FredokaOne
-    local TYPE_SPEED = Config.TypingSpeed or 0.05
-    local PAUSE_TIME = Config.PauseTime or 2.5
+    local CENTER_TEXT_SIZE = tonumber(Config.CenterTextSize) or 32
+    local CENTER_TEXT_FONT = ParseFont(Config.CenterTextFont, Enum.Font.FredokaOne)
+    local TYPE_SPEED = tonumber(Config.TypingSpeed) or 0.05
+    local PAUSE_TIME = tonumber(Config.PauseTime) or 2.5
+    local SHOW_CENTER_TEXT = ParseBool(Config.ShowCenterText, false)
     
     local TAB_BOXES = Config.TabBoxes or {}
     
@@ -245,10 +288,10 @@ return function(Config)
     Instance.new("UICorner", LeftPanel).CornerRadius = UDim.new(0, 8)
     local LStrk = Instance.new("UIStroke", LeftPanel)
     LStrk.Color, LStrk.Transparency, LStrk.Thickness = C_BASE, 0.5, 1.5
-    LeftPanel.Visible = false -- ซ่อนตอนแรก
+    LeftPanel.Visible = false 
 
     -- ======================================================
-    -- 📁 ZONE TAB (RIGHT SIDE - ALWAYS VISIBLE AFTER START)
+    -- 📁 ZONE TAB (RIGHT SIDE)
     -- ======================================================
     local RPane = Instance.new("Frame", Cont)
     RPane.AnchorPoint, RPane.Position, RPane.Size = Vector2.new(1, 0), UDim2.new(1, -20, 0, 20), UDim2.new(0, 420, 0, 350)
@@ -256,7 +299,7 @@ return function(Config)
     Instance.new("UICorner", RPane).CornerRadius = UDim.new(0, 8)
     local RStrk = Instance.new("UIStroke", RPane)
     RStrk.Color, RStrk.Transparency, RStrk.Thickness = C_BASE, 0.5, 1.5
-    RPane.Visible = false -- ซ่อนตอนแรก
+    RPane.Visible = false 
 
     local RTit = Instance.new("TextLabel", RPane)
     RTit.Size, RTit.Position, RTit.BackgroundTransparency = UDim2.new(1,-40,0,40), UDim2.new(0,20,0,10), 1
@@ -334,12 +377,11 @@ return function(Config)
     SlotP.BackgroundTransparency = 0.4
     Instance.new("UICorner", SlotP).CornerRadius = UDim.new(0, 8)
     Instance.new("UIStroke", SlotP).Color = Color3.fromRGB(180, 80, 255)
-    SlotP.Visible = false -- ซ่อนตอนแรก
+    SlotP.Visible = false 
     
     local LLo = Instance.new("UIListLayout", SlotP)
     LLo.FillDirection, LLo.Padding, LLo.HorizontalAlignment, LLo.VerticalAlignment = Enum.FillDirection.Horizontal, UDim.new(0, 6), Enum.HorizontalAlignment.Center, Enum.VerticalAlignment.Center
 
-    -- ฟังก์ชันปุ่ม Start
     StartBtn.MouseButton1Click:Connect(function()
         if isStarted then return end
         isStarted = true
@@ -347,7 +389,6 @@ return function(Config)
         local fadeOut = TS:Create(StartGroup, TweenInfo.new(0.4), {GroupTransparency = 1})
         fadeOut:Play()
 
-        -- โชว์หน้าต่างหลักขึ้นมา
         LeftPanel.Visible = true
         RPane.Visible = true
         SlotP.Visible = true
@@ -369,18 +410,17 @@ return function(Config)
 
         local lbl = Instance.new("TextLabel", btn)
         lbl.Size, lbl.BackgroundTransparency, lbl.Text = UDim2.new(1,0,1,0), 1, tabData.n
-        lbl.TextColor3, lbl.Font, lbl.TextSize = Color3.fromRGB(255,255,255), C_FONT, 15
+        lbl.TextColor3, lbl.Font, lbl.TextSize = Color3.fromRGB(255,255,255), C_FONT, 10
         lbl.TextWrapped = true
 
         btn.MouseButton1Click:Connect(function()
             local char = p.Character
             if not char or not char:FindFirstChild("HumanoidRootPart") then return end
 
-            -- 🛑 เช็คว่ากดปุ่มเดิมซ้ำหรือไม่ (ระบบ Toggle)
             if currentFocusedTab == tabData.id then
                 currentFocusedTab = nil
                 clearHighlights()
-                camera.CameraType = Enum.CameraType.Custom -- เลิกโฟกัส คืนกล้องให้ผู้เล่น
+                camera.CameraType = Enum.CameraType.Custom 
             else
                 currentFocusedTab = tabData.id
                 RTit.Text = "Zone: " .. tabData.n
