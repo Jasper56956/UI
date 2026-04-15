@@ -5,7 +5,7 @@
     ██║     ██║   ██║██╔══██║    ██╔══██║██║     ██║     
     ███████╗╚██████╔╝██║  ██║    ██║  ██║███████╗███████╗
     ╚══════╝ ╚═════╝ ╚═╝  ╚═╝    ╚═╝  ╚═╝╚══════╝╚══════╝
-    Library V27: Camera unlocks when clicking item boxes
+    Library V28: Clears highlight box and unlocks camera on item click
 ]=]
 
 local P = game:GetService("Players")
@@ -160,7 +160,7 @@ return function(Config)
     Cont.Visible = true
 
     -- ======================================================
-    -- 🚀 START SCREEN 
+    -- 🚀 START SCREEN (Typewriter + Button)
     -- ======================================================
     local StartGroup = Instance.new("CanvasGroup", Cont)
     StartGroup.Size, StartGroup.Position = UDim2.new(1, 0, 1, 0), UDim2.new(0, 0, 0, 0)
@@ -277,7 +277,7 @@ return function(Config)
     end)
 
     -- ======================================================
-    -- 🖼️ LEFT PANEL
+    -- 🖼️ LEFT PANEL (กรอบฝั่งซ้าย + Big Preview)
     -- ======================================================
     local LeftPanel = Instance.new("Frame", Cont)
     LeftPanel.Position, LeftPanel.Size = UDim2.new(0, 20, 0, 20), UDim2.new(0, 320, 0, 425)
@@ -356,8 +356,9 @@ return function(Config)
                 img.MouseButton1Click:Connect(function()
                     clearPreview()
                     
-                    -- 🔓 ปลดล็อคกล้องเมื่อผู้ใช้กดคลิกที่ Box ของ Zone
+                    -- 🔓 ปลดล็อคกล้องและลบกรอบไฮไลต์บนตัวละครออกเมื่อผู้ใช้กดคลิกที่ Box
                     camera.CameraType = Enum.CameraType.Custom
+                    clearHighlights()
                     
                     if data.Callback then 
                         if type(data.Callback) == "string" and data.Callback:match("^http") then
@@ -385,7 +386,7 @@ return function(Config)
     end
 
     -- ======================================================
-    -- 🌟 BOTTOM TABS UX 
+    -- 🌟 BOTTOM TABS UX (UNDER ZONE)
     -- ======================================================
     local SlotP = Instance.new("Frame", Cont)
     SlotP.AnchorPoint, SlotP.Position = Vector2.new(1, 0), UDim2.new(1, -20, 0, 385)
