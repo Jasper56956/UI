@@ -68,7 +68,7 @@ return function(Config)
     
     local TOGGLE_KEY = ParseKey(Config.ToggleKey, Enum.KeyCode.RightControl)
     local C_FONT = ParseFont(Config.Font, Enum.Font.GothamMedium)
-    local INFO_TITLE = Config.InfoTitle or "Zone:"
+    local INFO_TITLE = Config.InfoTitle or "Zone :"
     
     -- 🌟 Center Text Typewriter Config
     local CENTER_TEXT_DATA = Config.CenterText or {"ยินดีต้อนรับสู่ระบบ!", "คลิกที่ปุ่มด้านล่างเพื่อเริ่มต้นใช้งาน"}
@@ -466,7 +466,7 @@ return function(Config)
                 camera.CameraType = Enum.CameraType.Custom
             else
                 currentFocusedTab = tabData.id
-                RTit.Text = "Zone: " .. tabData.n
+                RTit.Text = "Zone : " .. tabData.n
                 RenderBoxes(TAB_BOXES[tabData.id] or {})
 
                 clearHighlights()
