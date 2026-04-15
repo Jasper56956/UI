@@ -5,7 +5,7 @@
     ██║     ██║   ██║██╔══██║    ██╔══██║██║     ██║     
     ███████╗╚██████╔╝██║  ██║    ██║  ██║███████╗███████╗
     ╚══════╝ ╚═════╝ ╚═╝  ╚═╝    ╚═╝  ╚═╝╚══════╝╚══════╝
-    Library V30: Fixed Big Preview Centering in Left Panel
+    Library V31: Added "All" (Whole Body) as a dedicated bottom tab button
 ]=]
 
 local P = game:GetService("Players")
@@ -68,7 +68,7 @@ return function(Config)
     
     local TOGGLE_KEY = ParseKey(Config.ToggleKey, Enum.KeyCode.RightControl)
     local C_FONT = ParseFont(Config.Font, Enum.Font.GothamMedium)
-    local INFO_TITLE = Config.InfoTitle or "Zone :"
+    local INFO_TITLE = Config.InfoTitle or "Zone:"
     
     -- 🌟 Center Text Typewriter Config
     local CENTER_TEXT_DATA = Config.CenterText or {"ยินดีต้อนรับสู่ระบบ!", "คลิกที่ปุ่มด้านล่างเพื่อเริ่มต้นใช้งาน"}
@@ -80,14 +80,16 @@ return function(Config)
     
     local TAB_BOXES = Config.TabBoxes or {}
     
+    -- 🌟 เพิ่ม All เข้าไปในตาราง และใช้ b สำหรับชื่อย่อบนปุ่ม
     local FIXED_TABS = {
-        {id="Head", n="Head", t={"Head"}}, 
-        {id="Torso", n="Torso", t={"Torso","UpperTorso","LowerTorso"}},
-        {id="Left Arm", n="Left Arm", t={"Left Arm","LeftUpperArm","LeftLowerArm","LeftHand"}},
-        {id="Right Arm", n="Right Arm", t={"Right Arm","RightUpperArm","RightLowerArm","RightHand"}},
-        {id="Left Leg", n="Left Leg", t={"Left Leg","LeftUpperLeg","LeftLowerLeg","LeftFoot"}},
-        {id="Right Leg", n="Right Leg", t={"Right Leg","RightUpperLeg","RightLowerLeg","RightFoot"}},
-        {id="Back", n="Back", t={"Torso","UpperTorso","LowerTorso"}}
+        {id="All", n="Whole Body", b="All", t={}},
+        {id="Head", n="Head", b="Head", t={"Head"}}, 
+        {id="Torso", n="Torso", b="Torso", t={"Torso","UpperTorso","LowerTorso"}},
+        {id="Left Arm", n="Left Arm", b="L. Arm", t={"Left Arm","LeftUpperArm","LeftLowerArm","LeftHand"}},
+        {id="Right Arm", n="Right Arm", b="R. Arm", t={"Right Arm","RightUpperArm","RightLowerArm","RightHand"}},
+        {id="Left Leg", n="Left Leg", b="L. Leg", t={"Left Leg","LeftUpperLeg","LeftLowerLeg","LeftFoot"}},
+        {id="Right Leg", n="Right Leg", b="R. Leg", t={"Right Leg","RightUpperLeg","RightLowerLeg","RightFoot"}},
+        {id="Back", n="Back", b="Back", t={"Torso","UpperTorso","LowerTorso"}}
     }
 
     local p = P.LocalPlayer
@@ -160,7 +162,7 @@ return function(Config)
     Cont.Visible = true
 
     -- ======================================================
-    -- 🚀 START SCREEN 
+    -- 🚀 START SCREEN
     -- ======================================================
     local StartGroup = Instance.new("CanvasGroup", Cont)
     StartGroup.Size, StartGroup.Position = UDim2.new(1, 0, 1, 0), UDim2.new(0, 0, 0, 0)
@@ -281,7 +283,7 @@ return function(Config)
     end)
 
     -- ======================================================
-    -- 🖼️ LEFT PANEL (กรอบฝั่งซ้าย + Big Preview แก้อยู่ตรงกลาง)
+    -- 🖼️ LEFT PANEL
     -- ======================================================
     local LeftPanel = Instance.new("Frame", Cont)
     LeftPanel.Position, LeftPanel.Size = UDim2.new(0, 20, 0, 20), UDim2.new(0, 320, 0, 425)
@@ -292,7 +294,6 @@ return function(Config)
     LeftPanel.Visible = false 
 
     local BigPreview = Instance.new("ImageLabel", LeftPanel)
-    -- แก้ไขตำแหน่งให้อยู่ตรงกลาง LeftPanel พอดี (0.5, 0, 0.5, 0)
     BigPreview.Size = UDim2.new(1, -20, 1, -20)
     BigPreview.Position = UDim2.new(0.5, 0, 0.5, 0) 
     BigPreview.AnchorPoint = Vector2.new(0.5, 0.5)
@@ -406,7 +407,8 @@ return function(Config)
     SlotP.Visible = false 
     
     local LLo = Instance.new("UIListLayout", SlotP)
-    LLo.FillDirection, LLo.Padding, LLo.HorizontalAlignment, LLo.VerticalAlignment = Enum.FillDirection.Horizontal, UDim.new(0, 6), Enum.HorizontalAlignment.Center, Enum.VerticalAlignment.Center
+    -- ปรับลด Padding ให้แคบลง เพื่อรองรับ 8 ปุ่ม
+    LLo.FillDirection, LLo.Padding, LLo.HorizontalAlignment, LLo.VerticalAlignment = Enum.FillDirection.Horizontal, UDim.new(0, 4), Enum.HorizontalAlignment.Center, Enum.VerticalAlignment.Center
 
     local currentFocusedTab = nil
 
@@ -422,7 +424,7 @@ return function(Config)
         SlotP.Visible = true
 
         currentFocusedTab = "All"
-        RTit.Text = "Zone : New All Body"
+        RTit.Text = "Zone: Whole Body"
         RenderBoxes(TAB_BOXES["All"] or {})
 
         local char = p.Character
@@ -439,14 +441,15 @@ return function(Config)
 
     for _, tabData in ipairs(FIXED_TABS) do
         local btn = Instance.new("TextButton", SlotP)
-        btn.Size, btn.BackgroundColor3 = UDim2.new(0, 52, 0, 36), Color3.fromRGB(80, 15, 25) 
+        -- ลดขนาดปุ่มลงเป็น 46px จาก 52px เพื่อให้พอดีกรอบ
+        btn.Size, btn.BackgroundColor3 = UDim2.new(0, 46, 0, 36), Color3.fromRGB(80, 15, 25) 
         btn.Text, btn.AutoButtonColor = "", false
         Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 6)
         local BStrk = Instance.new("UIStroke", btn)
         BStrk.Color, BStrk.Thickness = Color3.fromRGB(200, 40, 40), 1.2
 
         local lbl = Instance.new("TextLabel", btn)
-        lbl.Size, lbl.BackgroundTransparency, lbl.Text = UDim2.new(1,0,1,0), 1, tabData.n
+        lbl.Size, lbl.BackgroundTransparency, lbl.Text = UDim2.new(1,0,1,0), 1, tabData.b
         lbl.TextColor3, lbl.Font, lbl.TextSize = Color3.fromRGB(255,255,255), C_FONT, 10
         lbl.TextWrapped = true
 
@@ -456,7 +459,7 @@ return function(Config)
 
             if currentFocusedTab == tabData.id then
                 currentFocusedTab = "All"
-                RTit.Text = "Zone : New All Body"
+                RTit.Text = "Zone: Whole Body"
                 RenderBoxes(TAB_BOXES["All"] or {})
                 clearHighlights()
                 
@@ -466,29 +469,37 @@ return function(Config)
                 camera.CameraType = Enum.CameraType.Custom
             else
                 currentFocusedTab = tabData.id
-                RTit.Text = "Zone : " .. tabData.n
+                RTit.Text = "Zone: " .. tabData.n
                 RenderBoxes(TAB_BOXES[tabData.id] or {})
 
                 clearHighlights()
                 
-                local fp = char:FindFirstChild("HumanoidRootPart")
-                for _, pName in ipairs(tabData.t) do
-                    local part = char:FindFirstChild(pName)
-                    if part and part:IsA("BasePart") then
-                        fp = part
-                        local hb = Instance.new("SelectionBox", part)
-                        hb.Name = "VFXHub_Highlight"
-                        hb.Adornee = part
-                        hb.Color3 = C_HL
-                        hb.SurfaceColor3 = C_HL
-                        hb.LineThickness = 0.05
-                        hb.Transparency = 0
-                        hb.SurfaceTransparency = 0.7
+                -- ตรวจสอบว่าเป็นปุ่ม All หรือปุ่มอวัยวะ
+                if tabData.id == "All" then
+                    if char:FindFirstChild("Humanoid") then
+                        camera.CameraSubject = char.Humanoid
                     end
+                    camera.CameraType = Enum.CameraType.Custom
+                else
+                    local fp = char:FindFirstChild("HumanoidRootPart")
+                    for _, pName in ipairs(tabData.t) do
+                        local part = char:FindFirstChild(pName)
+                        if part and part:IsA("BasePart") then
+                            fp = part
+                            local hb = Instance.new("SelectionBox", part)
+                            hb.Name = "VFXHub_Highlight"
+                            hb.Adornee = part
+                            hb.Color3 = C_HL
+                            hb.SurfaceColor3 = C_HL
+                            hb.LineThickness = 0.05
+                            hb.Transparency = 0
+                            hb.SurfaceTransparency = 0.7
+                        end
+                    end
+                    
+                    camera.CameraSubject = fp
+                    camera.CameraType = Enum.CameraType.Custom
                 end
-                
-                camera.CameraSubject = fp
-                camera.CameraType = Enum.CameraType.Custom
             end
         end)
     end
