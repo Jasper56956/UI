@@ -5,7 +5,7 @@
     ██║     ██║   ██║██╔══██║    ██╔══██║██║     ██║     
     ███████╗╚██████╔╝██║  ██║    ██║  ██║███████╗███████╗
     ╚══════╝ ╚═════╝ ╚═╝  ╚═╝    ╚═╝  ╚═╝╚══════╝╚══════╝
-    Library V29: Camera completely UNLOCKED (Uses CameraSubject for free rotation)
+    Library V30: Fixed Big Preview Centering in Left Panel
 ]=]
 
 local P = game:GetService("Players")
@@ -160,7 +160,7 @@ return function(Config)
     Cont.Visible = true
 
     -- ======================================================
-    -- 🚀 START SCREEN (Typewriter + Button)
+    -- 🚀 START SCREEN 
     -- ======================================================
     local StartGroup = Instance.new("CanvasGroup", Cont)
     StartGroup.Size, StartGroup.Position = UDim2.new(1, 0, 1, 0), UDim2.new(0, 0, 0, 0)
@@ -252,7 +252,6 @@ return function(Config)
             tw:Play()
             tw.Completed:Connect(function() if not uiOpen then Main.Visible = false end end)
             
-            -- คืนค่ากล้องเป็นปกติ 100%
             camera.CameraType = Enum.CameraType.Custom
             if p.Character and p.Character:FindFirstChild("Humanoid") then
                 camera.CameraSubject = p.Character.Humanoid
@@ -282,7 +281,7 @@ return function(Config)
     end)
 
     -- ======================================================
-    -- 🖼️ LEFT PANEL (กรอบฝั่งซ้าย + Big Preview)
+    -- 🖼️ LEFT PANEL (กรอบฝั่งซ้าย + Big Preview แก้อยู่ตรงกลาง)
     -- ======================================================
     local LeftPanel = Instance.new("Frame", Cont)
     LeftPanel.Position, LeftPanel.Size = UDim2.new(0, 20, 0, 20), UDim2.new(0, 320, 0, 425)
@@ -293,7 +292,10 @@ return function(Config)
     LeftPanel.Visible = false 
 
     local BigPreview = Instance.new("ImageLabel", LeftPanel)
-    BigPreview.Size, BigPreview.Position, BigPreview.AnchorPoint = UDim2.new(1, -20, 1, -20), UDim2.new(0.5, 0.5), Vector2.new(0.5, 0.5)
+    -- แก้ไขตำแหน่งให้อยู่ตรงกลาง LeftPanel พอดี (0.5, 0, 0.5, 0)
+    BigPreview.Size = UDim2.new(1, -20, 1, -20)
+    BigPreview.Position = UDim2.new(0.5, 0, 0.5, 0) 
+    BigPreview.AnchorPoint = Vector2.new(0.5, 0.5)
     BigPreview.BackgroundTransparency = 1
     BigPreview.ImageTransparency = 1
     BigPreview.ScaleType = Enum.ScaleType.Fit
@@ -362,7 +364,6 @@ return function(Config)
                     clearPreview()
                     clearHighlights()
                     
-                    -- เมื่อคลิกกล่อง กล้องจะยังเป็นอิสระ (Custom) และคืนโฟกัสกลับไปที่ตัวละครเต็มตัว
                     camera.CameraType = Enum.CameraType.Custom
                     if p.Character and p.Character:FindFirstChild("Humanoid") then
                         camera.CameraSubject = p.Character.Humanoid
@@ -394,7 +395,7 @@ return function(Config)
     end
 
     -- ======================================================
-    -- 🌟 BOTTOM TABS UX (UNDER ZONE)
+    -- 🌟 BOTTOM TABS UX 
     -- ======================================================
     local SlotP = Instance.new("Frame", Cont)
     SlotP.AnchorPoint, SlotP.Position = Vector2.new(1, 0), UDim2.new(1, -20, 0, 385)
@@ -426,7 +427,6 @@ return function(Config)
 
         local char = p.Character
         if char and char:FindFirstChild("Humanoid") then
-            -- เริ่มต้นด้วยกล้องแบบอิสระ
             camera.CameraType = Enum.CameraType.Custom
             camera.CameraSubject = char.Humanoid
             clearHighlights()
@@ -455,7 +455,6 @@ return function(Config)
             if not char then return end
 
             if currentFocusedTab == tabData.id then
-                -- กลับไปโฟกัสทั้งตัว (Whole Body)
                 currentFocusedTab = "All"
                 RTit.Text = "Zone: Whole Body"
                 RenderBoxes(TAB_BOXES["All"] or {})
@@ -464,9 +463,8 @@ return function(Config)
                 if char:FindFirstChild("Humanoid") then
                     camera.CameraSubject = char.Humanoid
                 end
-                camera.CameraType = Enum.CameraType.Custom -- ล็อคปลดเสมอ
+                camera.CameraType = Enum.CameraType.Custom
             else
-                -- โฟกัสไปที่อวัยวะที่เลือก (อิสระ 100%)
                 currentFocusedTab = tabData.id
                 RTit.Text = "Zone: " .. tabData.n
                 RenderBoxes(TAB_BOXES[tabData.id] or {})
@@ -489,7 +487,6 @@ return function(Config)
                     end
                 end
                 
-                -- เปลี่ยนจุดหมุนกล้องไปที่ชิ้นส่วน (ผู้ใช้ใช้เมาส์หมุน/ซูมต่อได้เลย)
                 camera.CameraSubject = fp
                 camera.CameraType = Enum.CameraType.Custom
             end
