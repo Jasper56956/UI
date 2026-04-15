@@ -5,7 +5,7 @@
     ██║     ██║   ██║██╔══██║    ██╔══██║██║     ██║     
     ███████╗╚██████╔╝██║  ██║    ██║  ██║███████╗███████╗
     ╚══════╝ ╚═════╝ ╚═╝  ╚═╝    ╚═╝  ╚═╝╚══════╝╚══════╝
-    Library V28: Clears highlight box and unlocks camera on item click
+    Library V29: Camera completely UNLOCKED (Uses CameraSubject for free rotation)
 ]=]
 
 local P = game:GetService("Players")
@@ -81,13 +81,13 @@ return function(Config)
     local TAB_BOXES = Config.TabBoxes or {}
     
     local FIXED_TABS = {
-        {id="Head", n="Head", t={"Head"}, angle=0, zoom=3}, 
-        {id="Torso", n="Torso", t={"Torso","UpperTorso","LowerTorso"}, angle=0, zoom=6},
-        {id="Left Arm", n="Left Arm", t={"Left Arm","LeftUpperArm","LeftLowerArm","LeftHand"}, angle=0, zoom=5},
-        {id="Right Arm", n="Right Arm", t={"Right Arm","RightUpperArm","RightLowerArm","RightHand"}, angle=0, zoom=5},
-        {id="Left Leg", n="Left Leg", t={"Left Leg","LeftUpperLeg","LeftLowerLeg","LeftFoot"}, angle=0, zoom=5},
-        {id="Right Leg", n="Right Leg", t={"Right Leg","RightUpperLeg","RightLowerLeg","RightFoot"}, angle=0, zoom=5},
-        {id="Back", n="Back", t={"Torso","UpperTorso","LowerTorso"}, angle=180, zoom=6}
+        {id="Head", n="Head", t={"Head"}}, 
+        {id="Torso", n="Torso", t={"Torso","UpperTorso","LowerTorso"}},
+        {id="Left Arm", n="Left Arm", t={"Left Arm","LeftUpperArm","LeftLowerArm","LeftHand"}},
+        {id="Right Arm", n="Right Arm", t={"Right Arm","RightUpperArm","RightLowerArm","RightHand"}},
+        {id="Left Leg", n="Left Leg", t={"Left Leg","LeftUpperLeg","LeftLowerLeg","LeftFoot"}},
+        {id="Right Leg", n="Right Leg", t={"Right Leg","RightUpperLeg","RightLowerLeg","RightFoot"}},
+        {id="Back", n="Back", t={"Torso","UpperTorso","LowerTorso"}}
     }
 
     local p = P.LocalPlayer
@@ -251,7 +251,12 @@ return function(Config)
             local tw = TS:Create(MainScale, ti, {Scale = 0})
             tw:Play()
             tw.Completed:Connect(function() if not uiOpen then Main.Visible = false end end)
+            
+            -- คืนค่ากล้องเป็นปกติ 100%
             camera.CameraType = Enum.CameraType.Custom
+            if p.Character and p.Character:FindFirstChild("Humanoid") then
+                camera.CameraSubject = p.Character.Humanoid
+            end
             clearPreview()
             clearHighlights()
         end
@@ -355,10 +360,13 @@ return function(Config)
 
                 img.MouseButton1Click:Connect(function()
                     clearPreview()
-                    
-                    -- 🔓 ปลดล็อคกล้องและลบกรอบไฮไลต์บนตัวละครออกเมื่อผู้ใช้กดคลิกที่ Box
-                    camera.CameraType = Enum.CameraType.Custom
                     clearHighlights()
+                    
+                    -- เมื่อคลิกกล่อง กล้องจะยังเป็นอิสระ (Custom) และคืนโฟกัสกลับไปที่ตัวละครเต็มตัว
+                    camera.CameraType = Enum.CameraType.Custom
+                    if p.Character and p.Character:FindFirstChild("Humanoid") then
+                        camera.CameraSubject = p.Character.Humanoid
+                    end
                     
                     if data.Callback then 
                         if type(data.Callback) == "string" and data.Callback:match("^http") then
@@ -417,12 +425,11 @@ return function(Config)
         RenderBoxes(TAB_BOXES["All"] or {})
 
         local char = p.Character
-        if char and char:FindFirstChild("HumanoidRootPart") then
-            camera.CameraType = Enum.CameraType.Scriptable
+        if char and char:FindFirstChild("Humanoid") then
+            -- เริ่มต้นด้วยกล้องแบบอิสระ
+            camera.CameraType = Enum.CameraType.Custom
+            camera.CameraSubject = char.Humanoid
             clearHighlights()
-            local fp = char.HumanoidRootPart
-            local camPos = fp.CFrame * CFrame.new(-3, 1, -8)
-            TS:Create(camera, ti, {CFrame = CFrame.lookAt(camPos.Position, fp.Position)}):Play()
         end
 
         fadeOut.Completed:Connect(function()
@@ -445,25 +452,28 @@ return function(Config)
 
         btn.MouseButton1Click:Connect(function()
             local char = p.Character
-            if not char or not char:FindFirstChild("HumanoidRootPart") then return end
+            if not char then return end
 
             if currentFocusedTab == tabData.id then
+                -- กลับไปโฟกัสทั้งตัว (Whole Body)
                 currentFocusedTab = "All"
                 RTit.Text = "Zone: Whole Body"
                 RenderBoxes(TAB_BOXES["All"] or {})
                 clearHighlights()
                 
-                local fp = char.HumanoidRootPart
-                local camPos = fp.CFrame * CFrame.new(-3, 1, -8)
-                TS:Create(camera, ti, {CFrame = CFrame.lookAt(camPos.Position, fp.Position)}):Play()
+                if char:FindFirstChild("Humanoid") then
+                    camera.CameraSubject = char.Humanoid
+                end
+                camera.CameraType = Enum.CameraType.Custom -- ล็อคปลดเสมอ
             else
+                -- โฟกัสไปที่อวัยวะที่เลือก (อิสระ 100%)
                 currentFocusedTab = tabData.id
                 RTit.Text = "Zone: " .. tabData.n
                 RenderBoxes(TAB_BOXES[tabData.id] or {})
 
-                camera.CameraType = Enum.CameraType.Scriptable
                 clearHighlights()
-                local fp = char.HumanoidRootPart
+                
+                local fp = char:FindFirstChild("HumanoidRootPart")
                 for _, pName in ipairs(tabData.t) do
                     local part = char:FindFirstChild(pName)
                     if part and part:IsA("BasePart") then
@@ -478,9 +488,10 @@ return function(Config)
                         hb.SurfaceTransparency = 0.7
                     end
                 end
-                local zD = tabData.zoom or 4
-                local camPos = (tabData.id == "Back") and (fp.CFrame * CFrame.new(-3, 1, zD + 2)) or (fp.CFrame * CFrame.new(-3, 1, -zD - 2))
-                TS:Create(camera, ti, {CFrame = CFrame.lookAt(camPos.Position, fp.Position)}):Play()
+                
+                -- เปลี่ยนจุดหมุนกล้องไปที่ชิ้นส่วน (ผู้ใช้ใช้เมาส์หมุน/ซูมต่อได้เลย)
+                camera.CameraSubject = fp
+                camera.CameraType = Enum.CameraType.Custom
             end
         end)
     end
