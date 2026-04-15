@@ -456,7 +456,7 @@ return function(Config)
 
             if currentFocusedTab == tabData.id then
                 currentFocusedTab = "All"
-                RTit.Text = "Zone: Whole Body"
+                RTit.Text = "Zone : Whole Body"
                 RenderBoxes(TAB_BOXES["All"] or {})
                 clearHighlights()
                 
