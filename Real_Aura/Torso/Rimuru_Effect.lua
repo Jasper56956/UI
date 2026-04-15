@@ -1,31 +1,32 @@
 return function(Attachment)
     -- ==========================================
-    -- 💧 Rimuru VFX Particles
+    -- 💧 Rimuru VFX Particles (Fixed ColorSequence)
     -- ==========================================
 
     local Gradient = Instance.new("ParticleEmitter")
     Gradient.Name = "Gradient"
     Gradient.Lifetime = NumberRange.new(0.60, 0.60)
-    Gradient.Color = ColorSequence.new(ColorSequenceKeypoint.new(0.00, Color3.new(0.46, 0.53, 1.00)), ColorSequenceKeypoint.new(1.00, Color3.new(0.46, 0.53, 1.00)))
+    -- ✅ แก้ไข: เพิ่ม { } ครอบ ColorSequenceKeypoint
+    Gradient.Color = ColorSequence.new({ColorSequenceKeypoint.new(0.00, Color3.new(0.46, 0.53, 1.00)), ColorSequenceKeypoint.new(1.00, Color3.new(0.46, 0.53, 1.00))})
     Gradient.Speed = NumberRange.new(0.01, 0.01)
     Gradient.Brightness = 4
     Gradient.Texture = "rbxassetid://8030746658"
     Gradient.RotSpeed = NumberRange.new(500.00, 800.00)
     Gradient.Rotation = NumberRange.new(-360.00, 360.00)
     Gradient.Rate = 3
-    Gradient.Transparency = NumberSequence.new(NumberSequenceKeypoint.new(0.00, 1.00, 0.00), NumberSequenceKeypoint.new(0.58, 0.74, 0.00), NumberSequenceKeypoint.new(1.00, 1.00, 0.00))
+    Gradient.Transparency = NumberSequence.new({NumberSequenceKeypoint.new(0.00, 1.00, 0.00), NumberSequenceKeypoint.new(0.58, 0.74, 0.00), NumberSequenceKeypoint.new(1.00, 1.00, 0.00)})
     Gradient.Orientation = Enum.ParticleOrientation.VelocityPerpendicular
-    Gradient.Size = NumberSequence.new(NumberSequenceKeypoint.new(0.00, 0.00, 0.00), NumberSequenceKeypoint.new(1.00, 7.96, 0.00))
+    Gradient.Size = NumberSequence.new({NumberSequenceKeypoint.new(0.00, 0.00, 0.00), NumberSequenceKeypoint.new(1.00, 7.96, 0.00)})
     Gradient.Parent = Attachment
 
     local Ground = Instance.new("ParticleEmitter")
     Ground.Name = "Ground"
     Ground.Lifetime = NumberRange.new(0.30, 0.40)
-    Ground.Color = ColorSequence.new(ColorSequenceKeypoint.new(0.00, Color3.new(0.31, 0.35, 1.00)), ColorSequenceKeypoint.new(1.00, Color3.new(0.46, 0.63, 1.00)))
+    Ground.Color = ColorSequence.new({ColorSequenceKeypoint.new(0.00, Color3.new(0.31, 0.35, 1.00)), ColorSequenceKeypoint.new(1.00, Color3.new(0.46, 0.63, 1.00))})
     Ground.Drag = 2.5
     Ground.ZOffset = -1.5080381631851196
     Ground.SpreadAngle = Vector2.new(-68.50, 68.50)
-    Ground.Squash = NumberSequence.new(NumberSequenceKeypoint.new(0.00, 1.00, 0.00), NumberSequenceKeypoint.new(1.00, 1.00, 0.00))
+    Ground.Squash = NumberSequence.new({NumberSequenceKeypoint.new(0.00, 1.00, 0.00), NumberSequenceKeypoint.new(1.00, 1.00, 0.00)})
     Ground.Speed = NumberRange.new(15.08, 22.62)
     Ground.Brightness = 4
     Ground.Texture = "rbxassetid://8708744804"
@@ -33,32 +34,32 @@ return function(Attachment)
     Ground.Rotation = NumberRange.new(-90.00, -90.00)
     Ground.Rate = 75
     Ground.Orientation = Enum.ParticleOrientation.VelocityParallel
-    Ground.Size = NumberSequence.new(NumberSequenceKeypoint.new(0.00, 0.00, 0.00), NumberSequenceKeypoint.new(0.16, 1.56, 0.47), NumberSequenceKeypoint.new(1.00, 0.00, 0.00))
+    Ground.Size = NumberSequence.new({NumberSequenceKeypoint.new(0.00, 0.00, 0.00), NumberSequenceKeypoint.new(0.16, 1.56, 0.47), NumberSequenceKeypoint.new(1.00, 0.00, 0.00)})
     Ground.Parent = Attachment
 
     local Ground1 = Instance.new("ParticleEmitter")
     Ground1.Name = "Ground1"
     Ground1.Lifetime = NumberRange.new(0.50, 0.60)
-    Ground1.Color = ColorSequence.new(ColorSequenceKeypoint.new(0.00, Color3.new(0.46, 0.53, 1.00)), ColorSequenceKeypoint.new(1.00, Color3.new(0.46, 0.53, 1.00)))
+    Ground1.Color = ColorSequence.new({ColorSequenceKeypoint.new(0.00, Color3.new(0.46, 0.53, 1.00)), ColorSequenceKeypoint.new(1.00, Color3.new(0.46, 0.53, 1.00))})
     Ground1.Speed = NumberRange.new(0.01, 0.01)
     Ground1.Brightness = 4
     Ground1.Texture = "rbxassetid://8618373035"
     Ground1.RotSpeed = NumberRange.new(500.00, 800.00)
     Ground1.Rotation = NumberRange.new(-360.00, 360.00)
     Ground1.Rate = 50
-    Ground1.Transparency = NumberSequence.new(NumberSequenceKeypoint.new(0.00, 1.00, 0.00), NumberSequenceKeypoint.new(0.22, 0.00, 0.00), NumberSequenceKeypoint.new(0.55, 0.00, 0.00), NumberSequenceKeypoint.new(1.00, 1.00, 0.00))
+    Ground1.Transparency = NumberSequence.new({NumberSequenceKeypoint.new(0.00, 1.00, 0.00), NumberSequenceKeypoint.new(0.22, 0.00, 0.00), NumberSequenceKeypoint.new(0.55, 0.00, 0.00), NumberSequenceKeypoint.new(1.00, 1.00, 0.00)})
     Ground1.Orientation = Enum.ParticleOrientation.VelocityPerpendicular
-    Ground1.Size = NumberSequence.new(NumberSequenceKeypoint.new(0.00, 0.00, 0.00), NumberSequenceKeypoint.new(1.00, 4.00, 0.94))
+    Ground1.Size = NumberSequence.new({NumberSequenceKeypoint.new(0.00, 0.00, 0.00), NumberSequenceKeypoint.new(1.00, 4.00, 0.94)})
     Ground1.Parent = Attachment
 
     local Shards = Instance.new("ParticleEmitter")
     Shards.Name = "Shards"
     Shards.Lifetime = NumberRange.new(0.35, 0.45)
-    Shards.Color = ColorSequence.new(ColorSequenceKeypoint.new(0.00, Color3.new(0.31, 0.35, 1.00)), ColorSequenceKeypoint.new(1.00, Color3.new(0.37, 0.47, 1.00)))
+    Shards.Color = ColorSequence.new({ColorSequenceKeypoint.new(0.00, Color3.new(0.31, 0.35, 1.00)), ColorSequenceKeypoint.new(1.00, Color3.new(0.37, 0.47, 1.00))})
     Shards.Drag = 2.25
     Shards.ZOffset = -1.5080381631851196
     Shards.SpreadAngle = Vector2.new(-36.50, -36.50)
-    Shards.Squash = NumberSequence.new(NumberSequenceKeypoint.new(0.00, 1.00, 0.00), NumberSequenceKeypoint.new(1.00, 1.00, 0.00))
+    Shards.Squash = NumberSequence.new({NumberSequenceKeypoint.new(0.00, 1.00, 0.00), NumberSequenceKeypoint.new(1.00, 1.00, 0.00)})
     Shards.Speed = NumberRange.new(15.08, 22.62)
     Shards.Brightness = 4
     Shards.Texture = "rbxassetid://8708744804"
@@ -66,36 +67,36 @@ return function(Attachment)
     Shards.Rotation = NumberRange.new(-90.00, -90.00)
     Shards.Rate = 75
     Shards.Orientation = Enum.ParticleOrientation.VelocityParallel
-    Shards.Size = NumberSequence.new(NumberSequenceKeypoint.new(0.00, 0.00, 0.00), NumberSequenceKeypoint.new(0.19, 2.40, 0.47), NumberSequenceKeypoint.new(1.00, 0.00, 0.00))
+    Shards.Size = NumberSequence.new({NumberSequenceKeypoint.new(0.00, 0.00, 0.00), NumberSequenceKeypoint.new(0.19, 2.40, 0.47), NumberSequenceKeypoint.new(1.00, 0.00, 0.00)})
     Shards.Parent = Attachment
 
     local Specs = Instance.new("ParticleEmitter")
     Specs.Name = "Specs"
     Specs.Lifetime = NumberRange.new(0.85, 1.00)
-    Specs.Color = ColorSequence.new(ColorSequenceKeypoint.new(0.00, Color3.new(0.40, 0.42, 1.00)), ColorSequenceKeypoint.new(1.00, Color3.new(0.39, 0.51, 1.00)))
+    Specs.Color = ColorSequence.new({ColorSequenceKeypoint.new(0.00, Color3.new(0.40, 0.42, 1.00)), ColorSequenceKeypoint.new(1.00, Color3.new(0.39, 0.51, 1.00))})
     Specs.SpreadAngle = Vector2.new(-30.00, 30.00)
     Specs.Speed = NumberRange.new(5.00, 10.00)
     Specs.Brightness = 4
     Specs.Texture = "rbxassetid://8030760338"
     Specs.Rate = 30
-    Specs.Size = NumberSequence.new(NumberSequenceKeypoint.new(0.00, 0.00, 0.00), NumberSequenceKeypoint.new(0.17, 0.87, 0.44), NumberSequenceKeypoint.new(1.00, 0.00, 0.00))
+    Specs.Size = NumberSequence.new({NumberSequenceKeypoint.new(0.00, 0.00, 0.00), NumberSequenceKeypoint.new(0.17, 0.87, 0.44), NumberSequenceKeypoint.new(1.00, 0.00, 0.00)})
     Specs.Parent = Attachment
 
     local Stuff = Instance.new("ParticleEmitter")
     Stuff.Name = "Stuff"
     Stuff.Lifetime = NumberRange.new(0.85, 1.00)
-    Stuff.Color = ColorSequence.new(ColorSequenceKeypoint.new(0.00, Color3.new(0.40, 0.42, 1.00)), ColorSequenceKeypoint.new(1.00, Color3.new(0.39, 0.51, 1.00)))
-    Stuff.Squash = NumberSequence.new(NumberSequenceKeypoint.new(0.00, 1.00, 0.00), NumberSequenceKeypoint.new(1.00, 1.00, 0.00))
+    Stuff.Color = ColorSequence.new({ColorSequenceKeypoint.new(0.00, Color3.new(0.40, 0.42, 1.00)), ColorSequenceKeypoint.new(1.00, Color3.new(0.39, 0.51, 1.00))})
+    Stuff.Squash = NumberSequence.new({NumberSequenceKeypoint.new(0.00, 1.00, 0.00), NumberSequenceKeypoint.new(1.00, 1.00, 0.00)})
     Stuff.Speed = NumberRange.new(5.00, 10.00)
     Stuff.Brightness = 4
     Stuff.Texture = "rbxassetid://8271975883"
-    Stuff.Size = NumberSequence.new(NumberSequenceKeypoint.new(0.00, 0.00, 0.00), NumberSequenceKeypoint.new(0.50, 0.31, 0.31), NumberSequenceKeypoint.new(1.00, 0.00, 0.00))
+    Stuff.Size = NumberSequence.new({NumberSequenceKeypoint.new(0.00, 0.00, 0.00), NumberSequenceKeypoint.new(0.50, 0.31, 0.31), NumberSequenceKeypoint.new(1.00, 0.00, 0.00)})
     Stuff.Parent = Attachment
 
     local backAura = Instance.new("ParticleEmitter")
     backAura.Name = "backAura"
     backAura.Lifetime = NumberRange.new(0.40, 0.40)
-    backAura.Color = ColorSequence.new(ColorSequenceKeypoint.new(0.00, Color3.new(0.00, 0.00, 1.00)), ColorSequenceKeypoint.new(1.00, Color3.new(0.00, 0.00, 1.00)))
+    backAura.Color = ColorSequence.new({ColorSequenceKeypoint.new(0.00, Color3.new(0.00, 0.00, 1.00)), ColorSequenceKeypoint.new(1.00, Color3.new(0.00, 0.00, 1.00))})
     backAura.Drag = 10
     backAura.ZOffset = -2
     backAura.TimeScale = 0.5
@@ -109,15 +110,15 @@ return function(Attachment)
     backAura.Rate = 50
     backAura.EmissionDirection = Enum.NormalId.Front
     backAura.VelocityInheritance = 1
-    backAura.Transparency = NumberSequence.new(NumberSequenceKeypoint.new(0.00, 1.00, 0.00), NumberSequenceKeypoint.new(0.18, 0.15, 0.00), NumberSequenceKeypoint.new(0.32, 0.00, 0.00), NumberSequenceKeypoint.new(0.63, 0.81, 0.00), NumberSequenceKeypoint.new(0.85, 0.94, 0.00), NumberSequenceKeypoint.new(1.00, 1.00, 0.00))
+    backAura.Transparency = NumberSequence.new({NumberSequenceKeypoint.new(0.00, 1.00, 0.00), NumberSequenceKeypoint.new(0.18, 0.15, 0.00), NumberSequenceKeypoint.new(0.32, 0.00, 0.00), NumberSequenceKeypoint.new(0.63, 0.81, 0.00), NumberSequenceKeypoint.new(0.85, 0.94, 0.00), NumberSequenceKeypoint.new(1.00, 1.00, 0.00)})
     backAura.Orientation = Enum.ParticleOrientation.VelocityPerpendicular
-    backAura.Size = NumberSequence.new(NumberSequenceKeypoint.new(0.00, 0.00, 0.00), NumberSequenceKeypoint.new(0.22, 1.60, 1.22), NumberSequenceKeypoint.new(0.58, 2.30, 0.89), NumberSequenceKeypoint.new(1.00, 3.18, 0.00))
+    backAura.Size = NumberSequence.new({NumberSequenceKeypoint.new(0.00, 0.00, 0.00), NumberSequenceKeypoint.new(0.22, 1.60, 1.22), NumberSequenceKeypoint.new(0.58, 2.30, 0.89), NumberSequenceKeypoint.new(1.00, 3.18, 0.00)})
     backAura.Parent = Attachment
 
     local bot = Instance.new("ParticleEmitter")
     bot.Name = "bot"
     bot.Lifetime = NumberRange.new(0.20, 0.25)
-    bot.Color = ColorSequence.new(ColorSequenceKeypoint.new(0.00, Color3.new(0.67, 0.33, 1.00)), ColorSequenceKeypoint.new(1.00, Color3.new(0.67, 0.33, 1.00)))
+    bot.Color = ColorSequence.new({ColorSequenceKeypoint.new(0.00, Color3.new(0.67, 0.33, 1.00)), ColorSequenceKeypoint.new(1.00, Color3.new(0.67, 0.33, 1.00))})
     bot.Drag = 10
     bot.ZOffset = 0.949999988079071
     bot.TimeScale = 0.5
@@ -131,15 +132,15 @@ return function(Attachment)
     bot.LockedToPart = true
     bot.Rate = 200
     bot.VelocityInheritance = 1
-    bot.Transparency = NumberSequence.new(NumberSequenceKeypoint.new(0.00, 1.00, 0.00), NumberSequenceKeypoint.new(0.18, 0.15, 0.00), NumberSequenceKeypoint.new(0.32, 0.00, 0.00), NumberSequenceKeypoint.new(0.65, 0.18, 0.00), NumberSequenceKeypoint.new(0.86, 0.86, 0.00), NumberSequenceKeypoint.new(1.00, 1.00, 0.00))
+    bot.Transparency = NumberSequence.new({NumberSequenceKeypoint.new(0.00, 1.00, 0.00), NumberSequenceKeypoint.new(0.18, 0.15, 0.00), NumberSequenceKeypoint.new(0.32, 0.00, 0.00), NumberSequenceKeypoint.new(0.65, 0.18, 0.00), NumberSequenceKeypoint.new(0.86, 0.86, 0.00), NumberSequenceKeypoint.new(1.00, 1.00, 0.00)})
     bot.Orientation = Enum.ParticleOrientation.VelocityParallel
-    bot.Size = NumberSequence.new(NumberSequenceKeypoint.new(0.00, 0.00, 0.00), NumberSequenceKeypoint.new(0.14, 0.25, 0.00), NumberSequenceKeypoint.new(0.35, 1.76, 0.53), NumberSequenceKeypoint.new(0.84, 0.13, 0.00), NumberSequenceKeypoint.new(1.00, 0.00, 0.00))
+    bot.Size = NumberSequence.new({NumberSequenceKeypoint.new(0.00, 0.00, 0.00), NumberSequenceKeypoint.new(0.14, 0.25, 0.00), NumberSequenceKeypoint.new(0.35, 1.76, 0.53), NumberSequenceKeypoint.new(0.84, 0.13, 0.00), NumberSequenceKeypoint.new(1.00, 0.00, 0.00)})
     bot.Parent = Attachment
 
     local topAura = Instance.new("ParticleEmitter")
     topAura.Name = "topAura"
     topAura.Lifetime = NumberRange.new(0.30, 0.30)
-    topAura.Color = ColorSequence.new(ColorSequenceKeypoint.new(0.00, Color3.new(0.67, 0.00, 1.00)), ColorSequenceKeypoint.new(1.00, Color3.new(0.67, 0.00, 1.00)))
+    topAura.Color = ColorSequence.new({ColorSequenceKeypoint.new(0.00, Color3.new(0.67, 0.00, 1.00)), ColorSequenceKeypoint.new(1.00, Color3.new(0.67, 0.00, 1.00))})
     topAura.Drag = 10
     topAura.ZOffset = 0.949999988079071
     topAura.TimeScale = 0.5
@@ -153,8 +154,8 @@ return function(Attachment)
     topAura.LockedToPart = true
     topAura.Rate = 50
     topAura.VelocityInheritance = 1
-    topAura.Transparency = NumberSequence.new(NumberSequenceKeypoint.new(0.00, 1.00, 0.00), NumberSequenceKeypoint.new(0.18, 0.15, 0.00), NumberSequenceKeypoint.new(0.32, 0.00, 0.00), NumberSequenceKeypoint.new(0.65, 0.18, 0.00), NumberSequenceKeypoint.new(0.86, 0.86, 0.00), NumberSequenceKeypoint.new(1.00, 1.00, 0.00))
+    topAura.Transparency = NumberSequence.new({NumberSequenceKeypoint.new(0.00, 1.00, 0.00), NumberSequenceKeypoint.new(0.18, 0.15, 0.00), NumberSequenceKeypoint.new(0.32, 0.00, 0.00), NumberSequenceKeypoint.new(0.65, 0.18, 0.00), NumberSequenceKeypoint.new(0.86, 0.86, 0.00), NumberSequenceKeypoint.new(1.00, 1.00, 0.00)})
     topAura.Orientation = Enum.ParticleOrientation.VelocityParallel
-    topAura.Size = NumberSequence.new(NumberSequenceKeypoint.new(0.00, 0.00, 0.00), NumberSequenceKeypoint.new(0.14, 0.25, 0.00), NumberSequenceKeypoint.new(0.36, 4.47, 0.53), NumberSequenceKeypoint.new(0.84, 0.13, 0.00), NumberSequenceKeypoint.new(1.00, 0.00, 0.00))
+    topAura.Size = NumberSequence.new({NumberSequenceKeypoint.new(0.00, 0.00, 0.00), NumberSequenceKeypoint.new(0.14, 0.25, 0.00), NumberSequenceKeypoint.new(0.36, 4.47, 0.53), NumberSequenceKeypoint.new(0.84, 0.13, 0.00), NumberSequenceKeypoint.new(1.00, 0.00, 0.00)})
     topAura.Parent = Attachment
 end
