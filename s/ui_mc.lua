@@ -422,7 +422,7 @@ return function(Config)
         SlotP.Visible = true
 
         currentFocusedTab = "All"
-        RTit.Text = "Zone: Whole Body"
+        RTit.Text = "Zone : New All Body"
         RenderBoxes(TAB_BOXES["All"] or {})
 
         local char = p.Character
